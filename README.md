@@ -46,7 +46,8 @@ Edit `admin.json`:
 | `SESSION_CHECK_INTERVAL` | Phút giữa mỗi lần tự check session còn sống (mặc định 5) |
 | `SESSION_FAIL_THRESHOLD` | Số lần fail liên tiếp trước khi báo DIE (mặc định 2) |
 | `AUTO_RESTART_ENABLED` | Restart định kỳ 3h30 (`true`/`false`, mặc định tắt) |
-| `PROXY_URL` | Proxy cố định (không random mỗi boot) |
+| `PROXY_URL` | Proxy cố định (ưu tiên cao nhất) |
+| `PROXY_ENABLED` | `true` mới đọc `prox.txt` (mặc định `false`) |
 | `FB_USER_AGENT` | User-Agent cố định |
 | `LOGIN_DELAY_MS` | Delay trước login (mặc định 3000) |
 | `SEND_DELAY_MS` | Khoảng cách tối thiểu giữa 2 lần gửi tin (2500) |

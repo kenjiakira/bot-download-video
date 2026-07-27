@@ -54,11 +54,28 @@ function saveProxy(proxy) {
     } catch (_) {}
 }
 
-/**
- * Stable proxy for the whole process lifetime.
- * Priority: PROXY_URL env → saved state → first line of prox.txt (NOT random each boot).
- */
+function clearSavedProxy() {
+    try {
+        if (fs.existsSync(PROXY_STATE_FILE)) fs.unlinkSync(PROXY_STATE_FILE);
+    } catch (_) {}
+}
+
+function isProxyEnabled() {
+    if (process.env.PROXY_URL || process.env.PROXY) return true;
+    const v = (process.env.PROXY_ENABLED || 'false').toString().toLowerCase();
+    return v === 'true' || v === '1' || v === 'yes' || v === 'on';
+}
+
 function resolveStableProxy({ rotate = false } = {}) {
+    if (!isProxyEnabled()) {
+        console.log(
+            boldText(
+                gradient.cristal('[fingerprint] Proxy disabled (set PROXY_ENABLED=true or PROXY_URL to enable)')
+            )
+        );
+        return null;
+    }
+
     const fromEnv = normalizeProxy(process.env.PROXY_URL || process.env.PROXY);
     if (fromEnv) {
         console.log(boldText(gradient.cristal(`[fingerprint] Proxy from env: ${fromEnv}`)));
@@ -93,6 +110,31 @@ function resolveStableProxy({ rotate = false } = {}) {
     return chosen;
 }
 
+function applyProxy(fcaName, proxy) {
+    global.cc.proxy = proxy || null;
+    try {
+        const fcaUtils = require(path.join(__dirname, '..', 'logins', fcaName, 'utils.js'));
+        if (fcaUtils && typeof fcaUtils.setProxy === 'function') {
+            fcaUtils.setProxy(proxy || null);
+        }
+    } catch (_) {}
+}
+
+function isProxyTunnelError(err) {
+    const msg = [err?.message, err?.stack, err?.code, typeof err === 'string' ? err : '']
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+    return (
+        msg.includes('tunneling socket') ||
+        msg.includes('econnrefused') ||
+        msg.includes('econnreset') ||
+        msg.includes('proxy') ||
+        err?.code === 'ECONNREFUSED' ||
+        err?.code === 'ECONNRESET'
+    );
+}
+
 function getUserAgent() {
     return DEFAULT_UA;
 }
@@ -114,6 +156,10 @@ function getLoginOptions(appState) {
 
 module.exports = {
     resolveStableProxy,
+    applyProxy,
+    clearSavedProxy,
+    isProxyEnabled,
+    isProxyTunnelError,
     getUserAgent,
     getLoginOptions,
     DEFAULT_UA

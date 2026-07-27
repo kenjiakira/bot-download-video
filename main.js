@@ -10,7 +10,13 @@ const { handleListenEvents } = require('./utils/listen');
 const { logSummary } = require('./utils/ensureFiles');
 const { startWebServer, setBotReady } = require('./utils/webServer');
 const { startSessionGuard } = require('./utils/sessionGuard');
-const { resolveStableProxy, getLoginOptions } = require('./utils/fingerprint');
+const {
+    resolveStableProxy,
+    getLoginOptions,
+    applyProxy,
+    clearSavedProxy,
+    isProxyTunnelError
+} = require('./utils/fingerprint');
 
 const boldText = (text) => chalk.bold(text);
 
@@ -43,7 +49,7 @@ try {
     console.warn('Could not load FCA config from', configPath, e.message);
 }
 
-const proxy = resolveStableProxy({ rotate: false });
+let proxy = resolveStableProxy({ rotate: false });
 
 const login = require(path.join(__dirname, 'logins', fcaName, 'index.js'));
 
@@ -150,16 +156,7 @@ const loadEventCommands = () => {
             }
 
             const loginOptions = getLoginOptions(JSON.parse(fs.readFileSync(appstatePath, 'utf8')));
-            if (proxy && typeof loginOptions === 'object') {
-                // hut-chat-api đọc proxy qua setProxy nếu được gọi; lưu global cho FCA utils
-                global.cc.proxy = proxy;
-                try {
-                    const fcaUtils = require(path.join(__dirname, 'logins', fcaName, 'utils.js'));
-                    if (fcaUtils && typeof fcaUtils.setProxy === 'function') {
-                        fcaUtils.setProxy(proxy);
-                    }
-                } catch (_) {}
-            }
+            applyProxy(fcaName, proxy);
 
             login(loginOptions, async function (err, api) {
                 if (err) {
@@ -168,6 +165,22 @@ const loadEventCommands = () => {
                         console.error(boldText(gradient.passion(JSON.stringify(err))));
                     } else {
                         console.error(boldText(gradient.passion(String(err))));
+                    }
+
+                    // Proxy chết (ECONNREFUSED / tunneling) → bỏ proxy, login thẳng
+                    if (proxy && isProxyTunnelError(err)) {
+                        console.log(
+                            boldText(
+                                gradient.passion(
+                                    `[fingerprint] Proxy lỗi (${proxy}) — retry login không proxy...`
+                                )
+                            )
+                        );
+                        clearSavedProxy();
+                        proxy = null;
+                        applyProxy(fcaName, null);
+                        await new Promise((resolve) => setTimeout(resolve, 2000));
+                        return startBot();
                     }
 
                     if (err.error === 'login-approval' || err.error === 'Wrong username/password.') {
