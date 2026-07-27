@@ -52,11 +52,13 @@ Edit `admin.json`:
 
 ## Dashboard web
 
-Mở `https://<app>.onrender.com/` (hoặc `/?token=YOUR_TOKEN` nếu đã set `DASHBOARD_TOKEN`).
+1. Mở `https://<app>.onrender.com/login`
+2. Nhập `DASHBOARD_TOKEN` (mật khẩu) → cookie 7 ngày
+3. Dashboard có tab **Overview** + **Console** (lệnh / autodownload realtime)
 
-- UI: [`public/dashboard.html`](public/dashboard.html) — Sora + Chart.js, auto refresh 15s
-- API: `GET /api/status` — session, runtime, anti-die, logs
-- UptimeRobot vẫn dùng `/ping` (không cần token)
+- UI: [`public/login.html`](public/login.html), [`public/dashboard.html`](public/dashboard.html)
+- API: `POST /api/login`, `GET /api/status`, `GET /api/logs`
+- UptimeRobot vẫn dùng `/ping` (không cần login)
 
 | `FB_USER_AGENT` | User-Agent cố định |
 | `LOGIN_DELAY_MS` | Delay trước login (mặc định 3000) |

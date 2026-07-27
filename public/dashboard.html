@@ -13,7 +13,6 @@
       --bg0: #071018;
       --bg1: #0c1822;
       --panel: rgba(14, 28, 40, 0.72);
-      --panel-solid: #0e1c28;
       --line: rgba(120, 180, 200, 0.14);
       --text: #e7f3f6;
       --muted: #7f9eaa;
@@ -25,7 +24,6 @@
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
       --radius: 22px;
     }
-
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body {
@@ -37,242 +35,104 @@
         linear-gradient(165deg, var(--bg0), var(--bg1) 45%, #08141c);
       background-attachment: fixed;
     }
-
     .noise {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      opacity: 0.035;
+      pointer-events: none; position: fixed; inset: 0; opacity: 0.035; z-index: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      z-index: 0;
     }
-
-    .wrap {
-      position: relative;
-      z-index: 1;
-      width: min(1180px, calc(100% - 2rem));
-      margin: 0 auto;
-      padding: 2rem 0 3.5rem;
-    }
-
-    header.hero {
-      display: grid;
-      gap: 1.25rem;
-      margin-bottom: 1.75rem;
-      animation: rise 0.7s ease both;
-    }
-
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: none; }
-    }
-
-    .brand-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-    }
-
-    .brand p {
-      margin: 0.45rem 0 0;
-      color: var(--muted);
-      max-width: 36rem;
-      line-height: 1.5;
-    }
-
-    .brand .mark {
-      display: inline-block;
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    .actions {
-      display: flex;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-
+    .wrap { position: relative; z-index: 1; width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 3.5rem; }
+    header.hero { display: grid; gap: 1.1rem; margin-bottom: 1.25rem; animation: rise .7s ease both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .brand-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+    .brand h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -0.04em; line-height: 1.1; }
+    .brand .mark { color: var(--accent); font-weight: 700; }
+    .brand p { margin: 0.45rem 0 0; color: var(--muted); max-width: 36rem; line-height: 1.5; }
+    .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
     button, .pill {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 0.55rem 0.95rem;
-      font: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--text);
+      border-radius: 999px; padding: 0.55rem 0.95rem; font: inherit; font-size: 0.85rem; cursor: pointer;
       transition: border-color .2s, background .2s, transform .15s;
     }
     button:hover { border-color: rgba(45,212,191,.45); background: rgba(45,212,191,.08); }
     button:active { transform: scale(0.98); }
-
+    .tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .tab {
+      border: 1px solid var(--line); background: transparent; color: var(--muted);
+      border-radius: 999px; padding: 0.5rem 1rem; font: inherit; font-size: 0.85rem; cursor: pointer;
+    }
+    .tab.active { color: var(--text); border-color: rgba(45,212,191,.4); background: rgba(45,212,191,.1); }
+    .panel { display: none; }
+    .panel.active { display: block; animation: rise .35s ease both; }
     .status-banner {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.85rem 1.25rem;
-      padding: 1rem 1.2rem;
-      border-radius: var(--radius);
-      border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(14px);
-      box-shadow: var(--shadow);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem 1.25rem;
+      padding: 1rem 1.2rem; border-radius: var(--radius); border: 1px solid var(--line);
+      background: var(--panel); backdrop-filter: blur(14px); box-shadow: var(--shadow);
     }
-
-    .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--muted);
-      box-shadow: 0 0 0 6px rgba(127,158,170,.12);
-    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 6px rgba(127,158,170,.12); }
     .dot.ok { background: var(--good); box-shadow: 0 0 0 6px rgba(52,211,153,.15); animation: pulse 2s infinite; }
     .dot.bad { background: var(--bad); box-shadow: 0 0 0 6px rgba(251,113,133,.15); animation: pulse 1.2s infinite; }
     .dot.warn { background: var(--warn); box-shadow: 0 0 0 6px rgba(251,191,36,.15); }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
     .status-banner strong { font-size: 1.05rem; }
-    .status-banner .meta {
-      color: var(--muted);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.78rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 1rem;
-    }
-
+    .status-banner .meta { color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem; }
     .card {
-      grid-column: span 4;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(14px);
-      border-radius: var(--radius);
-      padding: 1.15rem 1.2rem 1.25rem;
-      box-shadow: var(--shadow);
-      animation: rise 0.8s ease both;
+      grid-column: span 4; border: 1px solid var(--line); background: var(--panel);
+      backdrop-filter: blur(14px); border-radius: var(--radius); padding: 1.15rem 1.2rem 1.25rem; box-shadow: var(--shadow);
     }
     .card.wide { grid-column: span 8; }
     .card.full { grid-column: span 12; }
-    .card:nth-child(2) { animation-delay: .05s; }
-    .card:nth-child(3) { animation-delay: .1s; }
-    .card:nth-child(4) { animation-delay: .15s; }
-    .card:nth-child(5) { animation-delay: .2s; }
-    .card:nth-child(6) { animation-delay: .25s; }
-
     .card h2 {
-      margin: 0 0 0.85rem;
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 600;
+      margin: 0 0 0.85rem; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600;
     }
-
-    .stat {
-      font-size: clamp(1.4rem, 3vw, 1.85rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin: 0;
-    }
+    .stat { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 700; letter-spacing: -0.03em; margin: 0; }
     .stat.mono { font-family: "IBM Plex Mono", monospace; font-size: 1.15rem; font-weight: 500; }
-    .sub {
-      margin: 0.35rem 0 0;
-      color: var(--muted);
-      font-size: 0.85rem;
-    }
-
-    .kv {
-      display: grid;
-      gap: 0.55rem;
-    }
+    .sub { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.85rem; }
+    .kv { display: grid; gap: 0.55rem; }
     .kv-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.45rem 0;
-      border-bottom: 1px solid rgba(120,180,200,0.08);
-      font-size: 0.9rem;
+      display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0;
+      border-bottom: 1px solid rgba(120,180,200,0.08); font-size: 0.9rem;
     }
     .kv-row span:first-child { color: var(--muted); }
-    .kv-row span:last-child {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.82rem;
-      text-align: right;
-      word-break: break-all;
-    }
-
+    .kv-row span:last-child { font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; text-align: right; word-break: break-all; }
     .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
     .tag {
-      font-size: 0.72rem;
-      padding: 0.28rem 0.55rem;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      background: rgba(255,255,255,0.02);
+      font-size: 0.72rem; padding: 0.28rem 0.55rem; border-radius: 999px; border: 1px solid var(--line);
+      color: var(--muted); background: rgba(255,255,255,0.02);
     }
     .tag.on { color: var(--good); border-color: rgba(52,211,153,.35); }
     .tag.off { color: var(--bad); border-color: rgba(251,113,133,.3); }
-
     .chart-box { height: 160px; margin-top: 0.5rem; }
-
-    .logs {
-      max-height: 280px;
-      overflow: auto;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.75rem;
-      display: grid;
-      gap: 0.35rem;
+    .console-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; align-items: center; }
+    .console-toolbar .grow { flex: 1; min-width: 140px; }
+    .console-box {
+      max-height: min(62vh, 560px); overflow: auto; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem;
+      display: grid; gap: 0.35rem; padding: 0.35rem; border-radius: 16px; background: rgba(0,0,0,.28);
+      border: 1px solid rgba(120,180,200,.1);
     }
     .log-line {
-      display: grid;
-      grid-template-columns: 72px 54px 1fr;
-      gap: 0.55rem;
-      padding: 0.4rem 0.5rem;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.18);
+      display: grid; grid-template-columns: 78px 58px 1fr; gap: 0.55rem; padding: 0.45rem 0.55rem;
+      border-radius: 10px; background: rgba(255,255,255,0.02);
     }
+    .log-line:hover { background: rgba(45,212,191,0.06); }
     .log-line .lvl-info { color: var(--accent-2); }
+    .log-line .lvl-cmd { color: var(--accent); }
     .log-line .lvl-warn { color: var(--warn); }
     .log-line .lvl-error { color: var(--bad); }
     .log-line .time { color: var(--muted); }
-
-    footer {
-      margin-top: 1.5rem;
-      color: var(--muted);
-      font-size: 0.8rem;
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
+    .filter-input {
+      width: 100%; border: 1px solid var(--line); background: rgba(0,0,0,.25); color: var(--text);
+      border-radius: 999px; padding: 0.5rem 0.9rem; font: inherit; font-size: 0.85rem; outline: none;
     }
-
+    footer {
+      margin-top: 1.5rem; color: var(--muted); font-size: 0.8rem;
+      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
     .err {
-      display: none;
-      margin-top: 1rem;
-      padding: 0.9rem 1rem;
-      border-radius: 14px;
-      border: 1px solid rgba(251,113,133,.35);
-      background: rgba(251,113,133,.08);
-      color: #fecdd3;
+      display: none; margin-top: 1rem; padding: 0.9rem 1rem; border-radius: 14px;
+      border: 1px solid rgba(251,113,133,.35); background: rgba(251,113,133,.08); color: #fecdd3;
     }
     .err.show { display: block; }
-
     @media (max-width: 900px) {
       .card, .card.wide { grid-column: span 12; }
       .log-line { grid-template-columns: 1fr; }
@@ -286,12 +146,17 @@
       <div class="brand-row">
         <div class="brand">
           <h1><span class="mark">Download</span> Bot</h1>
-          <p>Theo dõi session Facebook, uptime và chống die — refresh tự động mỗi 15 giây.</p>
+          <p>Session, uptime, chống die — và tab Console xem lệnh realtime.</p>
         </div>
         <div class="actions">
           <button type="button" id="btnRefresh">Refresh</button>
-          <button type="button" id="btnCopy">Copy JSON</button>
+          <button type="button" id="btnLogout">Logout</button>
         </div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="overview">Overview</button>
+        <button type="button" class="tab" data-tab="console">Console</button>
       </div>
 
       <div class="status-banner" id="banner">
@@ -304,41 +169,48 @@
       <div class="err" id="errBox"></div>
     </header>
 
-    <section class="grid">
-      <article class="card">
-        <h2>Session</h2>
-        <p class="stat" id="sessionState">—</p>
-        <p class="sub" id="sessionUser">—</p>
-        <div class="tags" id="sessionTags"></div>
-      </article>
+    <section class="panel active" id="panel-overview">
+      <div class="grid">
+        <article class="card">
+          <h2>Session</h2>
+          <p class="stat" id="sessionState">—</p>
+          <p class="sub" id="sessionUser">—</p>
+          <div class="tags" id="sessionTags"></div>
+        </article>
+        <article class="card">
+          <h2>Uptime</h2>
+          <p class="stat mono" id="uptime">—</p>
+          <p class="sub" id="uptimeSub">Process uptime</p>
+        </article>
+        <article class="card">
+          <h2>Memory</h2>
+          <p class="stat mono" id="mem">—</p>
+          <p class="sub" id="memSub">—</p>
+          <div class="chart-box"><canvas id="memChart"></canvas></div>
+        </article>
+        <article class="card wide">
+          <h2>Runtime</h2>
+          <div class="kv" id="runtimeKv"></div>
+        </article>
+        <article class="card">
+          <h2>Anti-die</h2>
+          <div class="kv" id="antiKv"></div>
+          <div class="tags" id="antiTags"></div>
+        </article>
+      </div>
+    </section>
 
-      <article class="card">
-        <h2>Uptime</h2>
-        <p class="stat mono" id="uptime">—</p>
-        <p class="sub" id="uptimeSub">Process uptime</p>
-      </article>
-
-      <article class="card">
-        <h2>Memory</h2>
-        <p class="stat mono" id="mem">—</p>
-        <p class="sub" id="memSub">—</p>
-        <div class="chart-box"><canvas id="memChart"></canvas></div>
-      </article>
-
-      <article class="card wide">
-        <h2>Runtime</h2>
-        <div class="kv" id="runtimeKv"></div>
-      </article>
-
-      <article class="card">
-        <h2>Anti-die</h2>
-        <div class="kv" id="antiKv"></div>
-        <div class="tags" id="antiTags"></div>
-      </article>
-
+    <section class="panel" id="panel-console">
       <article class="card full">
-        <h2>Recent logs</h2>
-        <div class="logs" id="logs">Chưa có log.</div>
+        <h2>Live console</h2>
+        <div class="console-toolbar">
+          <div class="grow">
+            <input class="filter-input" id="logFilter" placeholder="Lọc: ping, download, error…" />
+          </div>
+          <button type="button" id="btnClearView">Clear view</button>
+          <button type="button" id="btnCopyLogs">Copy logs</button>
+        </div>
+        <div class="console-box" id="logs">Chưa có log.</div>
       </article>
     </section>
 
@@ -349,12 +221,11 @@
   </div>
 
   <script>
-    const params = new URLSearchParams(location.search);
-    const token = params.get('token') || localStorage.getItem('dashboard_token') || '';
-    if (params.get('token')) localStorage.setItem('dashboard_token', params.get('token'));
-
     let memChart;
     let lastPayload = null;
+    let hideBefore = 0;
+
+    const opts = { credentials: 'include', cache: 'no-store' };
 
     function fmtUptime(sec) {
       sec = Math.max(0, Math.floor(sec || 0));
@@ -368,22 +239,38 @@
       parts.push(m + 'm', s + 's');
       return parts.join(' ');
     }
-
-    function fmtTime(ts) {
-      if (!ts) return '—';
-      return new Date(ts).toLocaleString('vi-VN');
+    function fmtTime(ts) { return ts ? new Date(ts).toLocaleString('vi-VN') : '—'; }
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
-
-    function apiUrl() {
-      const u = new URL('/api/status', location.origin);
-      if (token) u.searchParams.set('token', token);
-      return u.toString();
-    }
-
     function setKv(el, rows) {
-      el.innerHTML = rows
-        .map(([k, v]) => `<div class="kv-row"><span>${k}</span><span>${v ?? '—'}</span></div>`)
-        .join('');
+      el.innerHTML = rows.map(([k,v]) => `<div class="kv-row"><span>${k}</span><span>${v ?? '—'}</span></div>`).join('');
+    }
+
+    document.querySelectorAll('.tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    function renderLogs(logs) {
+      const q = (document.getElementById('logFilter').value || '').trim().toLowerCase();
+      const filtered = (logs || [])
+        .filter((l) => (l.at || 0) >= hideBefore)
+        .filter((l) => !q || `${l.level} ${l.message}`.toLowerCase().includes(q));
+      const el = document.getElementById('logs');
+      if (!filtered.length) {
+        el.textContent = 'Không có log phù hợp.';
+        return;
+      }
+      el.innerHTML = filtered.map((l) => {
+        const t = new Date(l.at).toLocaleTimeString('vi-VN');
+        const lvl = (l.level || 'info').toLowerCase();
+        return `<div class="log-line"><span class="time">${t}</span><span class="lvl-${lvl}">${lvl}</span><span>${escapeHtml(l.message)}</span></div>`;
+      }).join('');
     }
 
     function render(data) {
@@ -391,23 +278,18 @@
       const alive = data.session?.alive;
       const ready = data.bot?.ready;
       const dot = document.getElementById('dot');
-      const title = document.getElementById('bannerTitle');
-      const meta = document.getElementById('bannerMeta');
-
       dot.className = 'dot ' + (alive === true ? 'ok' : alive === false ? 'bad' : 'warn');
-      title.textContent =
-        alive === true
-          ? `${data.bot?.name || 'Bot'} · Session OK`
-          : alive === false
-            ? `${data.bot?.name || 'Bot'} · SESSION DIE`
-            : `${data.bot?.name || 'Bot'} · đang chờ check`;
-      meta.textContent = `ready=${ready} · check ${fmtTime(data.session?.lastCheckAt)} · refresh ${fmtTime(data.refreshedAt)}`;
+      document.getElementById('bannerTitle').textContent =
+        alive === true ? `${data.bot?.name || 'Bot'} · Session OK`
+        : alive === false ? `${data.bot?.name || 'Bot'} · SESSION DIE`
+        : `${data.bot?.name || 'Bot'} · đang chờ check`;
+      document.getElementById('bannerMeta').textContent =
+        `ready=${ready} · check ${fmtTime(data.session?.lastCheckAt)} · refresh ${fmtTime(data.refreshedAt)}`;
 
       document.getElementById('sessionState').textContent =
         alive === true ? 'Alive' : alive === false ? 'Dead' : 'Unknown';
       document.getElementById('sessionUser').textContent = data.session?.userName
-        ? `User: ${data.session.userName}`
-        : 'Chưa có tên user';
+        ? `User: ${data.session.userName}` : 'Chưa có tên user';
 
       const tags = document.getElementById('sessionTags');
       tags.innerHTML = '';
@@ -430,9 +312,9 @@
       document.getElementById('memSub').textContent = `${mem.usedLabel || '—'} / ${mem.totalLabel || '—'}`;
 
       if (window.Chart) {
-        const ctx = document.getElementById('memChart');
         const used = mem.usedPercent ?? 0;
         const free = Math.max(0, 100 - used);
+        const ctx = document.getElementById('memChart');
         if (memChart) {
           memChart.data.datasets[0].data = [used, free];
           memChart.update('none');
@@ -441,17 +323,9 @@
             type: 'doughnut',
             data: {
               labels: ['Used', 'Free'],
-              datasets: [{
-                data: [used, free],
-                backgroundColor: ['#2dd4bf', 'rgba(127,158,170,0.25)'],
-                borderWidth: 0
-              }]
+              datasets: [{ data: [used, free], backgroundColor: ['#2dd4bf', 'rgba(127,158,170,0.25)'], borderWidth: 0 }]
             },
-            options: {
-              cutout: '72%',
-              plugins: { legend: { display: false } },
-              animation: { duration: 400 }
-            }
+            options: { cutout: '72%', plugins: { legend: { display: false } }, animation: { duration: 400 } }
           });
         }
       }
@@ -479,45 +353,26 @@
       ]);
       const antiTags = document.getElementById('antiTags');
       antiTags.innerHTML = '';
-      const t1 = document.createElement('span');
-      t1.className = 'tag ' + (anti.proxyEnabled ? 'on' : 'off');
-      t1.textContent = anti.proxyEnabled ? 'proxy on' : 'proxy off';
-      antiTags.appendChild(t1);
-      const t2 = document.createElement('span');
-      t2.className = 'tag ' + (anti.autoRestart ? 'warn' : 'on');
-      t2.textContent = anti.autoRestart ? 'auto-restart on' : 'auto-restart off';
-      antiTags.appendChild(t2);
+      [['proxy', anti.proxyEnabled], ['auto-restart', anti.autoRestart]].forEach(([name, on]) => {
+        const s = document.createElement('span');
+        s.className = 'tag ' + (on ? (name === 'auto-restart' ? '' : 'on') : 'off');
+        s.textContent = on ? name + ' on' : name + ' off';
+        antiTags.appendChild(s);
+      });
 
-      const logs = data.logs || [];
-      const logsEl = document.getElementById('logs');
-      if (!logs.length) {
-        logsEl.textContent = 'Chưa có log.';
-      } else {
-        logsEl.innerHTML = logs
-          .map((l) => {
-            const t = new Date(l.at).toLocaleTimeString('vi-VN');
-            const lvl = (l.level || 'info').toLowerCase();
-            return `<div class="log-line"><span class="time">${t}</span><span class="lvl-${lvl}">${lvl}</span><span>${escapeHtml(l.message)}</span></div>`;
-          })
-          .join('');
-      }
-
-      document.getElementById('footLeft').textContent =
-        `${data.service || 'bot'} · auth ${data.authRequired ? 'on' : 'off'}`;
-      document.getElementById('footRight').textContent = `Updated ${fmtTime(data.refreshedAt)}`;
-    }
-
-    function escapeHtml(s) {
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+      renderLogs(data.logs || []);
+      document.getElementById('footLeft').textContent = `${data.service || 'bot'} · cookie session`;
+      document.getElementById('footRight').textContent = `Updated ${fmtTime(data.refreshedAt)} · ${ (data.logs||[]).length } logs`;
     }
 
     async function load() {
       const errBox = document.getElementById('errBox');
       try {
-        const res = await fetch(apiUrl(), { cache: 'no-store' });
+        const res = await fetch('/api/status', opts);
+        if (res.status === 401) {
+          location.href = '/login?next=' + encodeURIComponent('/');
+          return;
+        }
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error || `HTTP ${res.status}`);
@@ -526,21 +381,34 @@
         errBox.classList.remove('show');
         render(data);
       } catch (e) {
-        errBox.textContent = 'Không tải được /api/status: ' + e.message;
+        errBox.textContent = 'Không tải được status: ' + e.message;
         errBox.classList.add('show');
       }
     }
 
     document.getElementById('btnRefresh').addEventListener('click', load);
-    document.getElementById('btnCopy').addEventListener('click', async () => {
-      if (!lastPayload) return;
-      await navigator.clipboard.writeText(JSON.stringify(lastPayload, null, 2));
-      document.getElementById('btnCopy').textContent = 'Copied!';
-      setTimeout(() => (document.getElementById('btnCopy').textContent = 'Copy JSON'), 1200);
+    document.getElementById('logFilter').addEventListener('input', () => {
+      if (lastPayload) renderLogs(lastPayload.logs || []);
+    });
+    document.getElementById('btnClearView').addEventListener('click', () => {
+      hideBefore = Date.now();
+      if (lastPayload) renderLogs(lastPayload.logs || []);
+    });
+    document.getElementById('btnCopyLogs').addEventListener('click', async () => {
+      const logs = (lastPayload?.logs || []).filter((l) => (l.at || 0) >= hideBefore);
+      const text = logs.map((l) => `${new Date(l.at).toISOString()} [${l.level}] ${l.message}`).join('\n');
+      await navigator.clipboard.writeText(text);
+      const b = document.getElementById('btnCopyLogs');
+      b.textContent = 'Copied!';
+      setTimeout(() => (b.textContent = 'Copy logs'), 1000);
+    });
+    document.getElementById('btnLogout').addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST', ...opts });
+      location.href = '/login';
     });
 
     load();
-    setInterval(load, 15000);
+    setInterval(load, 5000);
   </script>
 </body>
 </html>
