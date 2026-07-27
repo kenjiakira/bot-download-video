@@ -22,6 +22,13 @@ let sessionStatus = {
     consecutiveFails: 0,
     userName: null
 };
+let mqttStatus = {
+    connected: null,
+    lastEventAt: null,
+    lastErrorAt: null,
+    lastError: null,
+    reconnects: 0
+};
 const recentLogs = [];
 
 function setBotReady(ready = true) {
@@ -30,6 +37,35 @@ function setBotReady(ready = true) {
 
 function setSessionStatus(partial = {}) {
     sessionStatus = { ...sessionStatus, ...partial };
+}
+
+function setMqttStatus(partial = {}) {
+    mqttStatus = { ...mqttStatus, ...partial };
+}
+
+function getOverallHealth() {
+    const sessionOk = sessionStatus.alive === true;
+    const sessionDead = sessionStatus.alive === false;
+    const mqttOk = mqttStatus.connected === true;
+    const mqttDown = mqttStatus.connected === false;
+
+    if (sessionDead) {
+        return { level: 'bad', label: 'Session DIE', detail: sessionStatus.lastError || 'appstate invalid' };
+    }
+    if (sessionOk && mqttDown) {
+        return {
+            level: 'warn',
+            label: 'Cookie OK · MQTT đứt',
+            detail: mqttStatus.lastError || 'listenMqtt unavailable — bot không nhận tin'
+        };
+    }
+    if (sessionOk && mqttOk) {
+        return { level: 'ok', label: 'Healthy', detail: 'Session + MQTT OK' };
+    }
+    if (sessionOk) {
+        return { level: 'warn', label: 'Cookie OK · MQTT chưa rõ', detail: 'Chưa nhận event MQTT' };
+    }
+    return { level: 'warn', label: 'Đang kiểm tra…', detail: 'Chờ session/MQTT' };
 }
 
 function pushLog(level, message, meta = null) {
@@ -166,6 +202,8 @@ function buildStatusPayload() {
             ...sessionStatus,
             guard: sessionGuard
         },
+        mqtt: { ...mqttStatus },
+        health: getOverallHealth(),
         runtime: {
             uptimeSec: Math.floor((Date.now() - startedAt) / 1000),
             processUptimeSec: Math.floor(process.uptime()),
@@ -216,10 +254,13 @@ function startWebServer() {
     // Keep-alive — no auth
     app.get('/ping', (_req, res) => res.status(200).send('pong'));
     app.get('/health', (_req, res) => {
+        const health = getOverallHealth();
         res.status(200).json({
             ok: true,
             botReady,
             sessionAlive: sessionStatus.alive,
+            mqttConnected: mqttStatus.connected,
+            health,
             lastCheckAt: sessionStatus.lastCheckAt
         });
     });
@@ -298,6 +339,8 @@ module.exports = {
     startWebServer,
     setBotReady,
     setSessionStatus,
+    setMqttStatus,
     pushLog,
-    buildStatusPayload
+    buildStatusPayload,
+    getOverallHealth
 };

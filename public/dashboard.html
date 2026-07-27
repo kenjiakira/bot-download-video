@@ -172,10 +172,16 @@
     <section class="panel active" id="panel-overview">
       <div class="grid">
         <article class="card">
-          <h2>Session</h2>
+          <h2>Session (cookie)</h2>
           <p class="stat" id="sessionState">—</p>
           <p class="sub" id="sessionUser">—</p>
           <div class="tags" id="sessionTags"></div>
+        </article>
+        <article class="card">
+          <h2>MQTT listen</h2>
+          <p class="stat" id="mqttState">—</p>
+          <p class="sub" id="mqttSub">Kênh nhận tin Messenger</p>
+          <div class="tags" id="mqttTags"></div>
         </article>
         <article class="card">
           <h2>Uptime</h2>
@@ -277,20 +283,40 @@
       lastPayload = data;
       const alive = data.session?.alive;
       const ready = data.bot?.ready;
+      const health = data.health || {};
+      const mqtt = data.mqtt || {};
       const dot = document.getElementById('dot');
-      dot.className = 'dot ' + (alive === true ? 'ok' : alive === false ? 'bad' : 'warn');
+      const level = health.level || (alive === true ? 'ok' : alive === false ? 'bad' : 'warn');
+      dot.className = 'dot ' + level;
       document.getElementById('bannerTitle').textContent =
-        alive === true ? `${data.bot?.name || 'Bot'} · Session OK`
-        : alive === false ? `${data.bot?.name || 'Bot'} · SESSION DIE`
-        : `${data.bot?.name || 'Bot'} · đang chờ check`;
+        `${data.bot?.name || 'Bot'} · ${health.label || '—'}`;
       document.getElementById('bannerMeta').textContent =
-        `ready=${ready} · check ${fmtTime(data.session?.lastCheckAt)} · refresh ${fmtTime(data.refreshedAt)}`;
+        `${health.detail || '—'} · check ${fmtTime(data.session?.lastCheckAt)} · refresh ${fmtTime(data.refreshedAt)}`;
 
       document.getElementById('sessionState').textContent =
         alive === true ? 'Alive' : alive === false ? 'Dead' : 'Unknown';
       document.getElementById('sessionUser').textContent = data.session?.userName
         ? `User: ${data.session.userName}` : 'Chưa có tên user';
 
+      document.getElementById('mqttState').textContent =
+        mqtt.connected === true ? 'Connected' : mqtt.connected === false ? 'Down' : 'Unknown';
+      document.getElementById('mqttSub').textContent = mqtt.connected === false
+        ? (mqtt.lastError || 'Server unavailable')
+        : mqtt.lastEventAt
+          ? `Last event ${fmtTime(mqtt.lastEventAt)}`
+          : 'Kênh nhận tin Messenger';
+
+      const mqttTags = document.getElementById('mqttTags');
+      mqttTags.innerHTML = '';
+      const addMqttTag = (text, cls) => {
+        const s = document.createElement('span');
+        s.className = 'tag ' + (cls || '');
+        s.textContent = text;
+        mqttTags.appendChild(s);
+      };
+      addMqttTag(mqtt.connected === true ? 'listen OK' : mqtt.connected === false ? 'listen fail' : 'pending',
+        mqtt.connected === true ? 'on' : mqtt.connected === false ? 'off' : '');
+      if (mqtt.reconnects) addMqttTag('reconnects: ' + mqtt.reconnects);
       const tags = document.getElementById('sessionTags');
       tags.innerHTML = '';
       const addTag = (text, cls) => {

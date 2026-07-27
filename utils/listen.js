@@ -1,25 +1,75 @@
 const gradient = require('gradient-string');
 
 const handleListenEvents = (api, commands = {}, eventCommands = {}) => {
-    api.setOptions({ listenEvents: true });
+    api.setOptions({ listenEvents: true, autoReconnect: true });
 
     const prefix = () => (global.cc && global.cc.prefix) || '/';
 
+    let lastMqttErrorLogAt = 0;
+    let mqttWasDown = false;
+
+    const web = () => {
+        try {
+            return require('./webServer');
+        } catch (_) {
+            return null;
+        }
+    };
+
     const logEvent = (level, message) => {
         console.log(gradient.cristal(`[event] ${message}`));
-        try {
-            require('./webServer').pushLog(level, message);
-        } catch (_) {}
+        const w = web();
+        if (w) w.pushLog(level, message);
     };
+
+    const markMqttUp = () => {
+        const w = web();
+        if (!w) return;
+        w.setMqttStatus({
+            connected: true,
+            lastEventAt: Date.now(),
+            lastError: null
+        });
+        if (mqttWasDown) {
+            mqttWasDown = false;
+            w.pushLog('info', 'MQTT listen reconnect OK — nhận tin trở lại');
+        }
+    };
+
+    const markMqttDown = (err) => {
+        const w = web();
+        if (!w) return;
+        const msg = err?.error || err?.message || String(err);
+        mqttWasDown = true;
+        const prev = w.buildStatusPayload().mqtt || {};
+        w.setMqttStatus({
+            connected: false,
+            lastErrorAt: Date.now(),
+            lastError: msg,
+            reconnects: (prev.reconnects || 0) + 1
+        });
+
+        const now = Date.now();
+        if (now - lastMqttErrorLogAt > 30_000) {
+            lastMqttErrorLogAt = now;
+            w.pushLog('warn', `MQTT down: ${msg} (cookie có thể vẫn OK — bot tạm không nhận tin)`);
+        }
+    };
+
+    // Ban đầu chưa biết MQTT
+    try {
+        web()?.setMqttStatus({ connected: null });
+    } catch (_) {}
 
     api.listenMqtt(async (err, event) => {
         if (err) {
             console.error(gradient.passion(err));
-            try {
-                require('./webServer').pushLog('error', `MQTT: ${err?.message || err}`);
-            } catch (_) {}
+            markMqttDown(err);
             return;
         }
+
+        // Có event thật = MQTT đang sống
+        markMqttUp();
 
         if (event.type !== 'message' && event.type !== 'message_reply') {
             return;
@@ -42,7 +92,10 @@ const handleListenEvents = (api, commands = {}, eventCommands = {}) => {
                 );
 
             if (!command || typeof command.onLaunch !== 'function') {
-                logEvent('warn', `Unknown command: ${pfx}${commandName} · uid=${event.senderID} · thread=${event.threadID}`);
+                logEvent(
+                    'warn',
+                    `Unknown command: ${pfx}${commandName} · uid=${event.senderID} · thread=${event.threadID}`
+                );
                 return;
             }
 
