@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Download Bot · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <style>
+    :root {
+      --bg0: #071018;
+      --bg1: #0c1822;
+      --panel: rgba(14, 28, 40, 0.72);
+      --panel-solid: #0e1c28;
+      --line: rgba(120, 180, 200, 0.14);
+      --text: #e7f3f6;
+      --muted: #7f9eaa;
+      --accent: #2dd4bf;
+      --accent-2: #38bdf8;
+      --good: #34d399;
+      --bad: #fb7185;
+      --warn: #fbbf24;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Sora", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(45, 212, 191, 0.16), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(56, 189, 248, 0.12), transparent 50%),
+        linear-gradient(165deg, var(--bg0), var(--bg1) 45%, #08141c);
+      background-attachment: fixed;
+    }
+
+    .noise {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 3.5rem;
+    }
+
+    header.hero {
+      display: grid;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+      animation: rise 0.7s ease both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .brand-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+
+    .brand p {
+      margin: 0.45rem 0 0;
+      color: var(--muted);
+      max-width: 36rem;
+      line-height: 1.5;
+    }
+
+    .brand .mark {
+      display: inline-block;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    button, .pill {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.55rem 0.95rem;
+      font: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .15s;
+    }
+    button:hover { border-color: rgba(45,212,191,.45); background: rgba(45,212,191,.08); }
+    button:active { transform: scale(0.98); }
+
+    .status-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem 1.25rem;
+      padding: 1rem 1.2rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--muted);
+      box-shadow: 0 0 0 6px rgba(127,158,170,.12);
+    }
+    .dot.ok { background: var(--good); box-shadow: 0 0 0 6px rgba(52,211,153,.15); animation: pulse 2s infinite; }
+    .dot.bad { background: var(--bad); box-shadow: 0 0 0 6px rgba(251,113,133,.15); animation: pulse 1.2s infinite; }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 0 6px rgba(251,191,36,.15); }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .status-banner strong { font-size: 1.05rem; }
+    .status-banner .meta {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem;
+    }
+
+    .card {
+      grid-column: span 4;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.2rem 1.25rem;
+      box-shadow: var(--shadow);
+      animation: rise 0.8s ease both;
+    }
+    .card.wide { grid-column: span 8; }
+    .card.full { grid-column: span 12; }
+    .card:nth-child(2) { animation-delay: .05s; }
+    .card:nth-child(3) { animation-delay: .1s; }
+    .card:nth-child(4) { animation-delay: .15s; }
+    .card:nth-child(5) { animation-delay: .2s; }
+    .card:nth-child(6) { animation-delay: .25s; }
+
+    .card h2 {
+      margin: 0 0 0.85rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .stat {
+      font-size: clamp(1.4rem, 3vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0;
+    }
+    .stat.mono { font-family: "IBM Plex Mono", monospace; font-size: 1.15rem; font-weight: 500; }
+    .sub {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .kv {
+      display: grid;
+      gap: 0.55rem;
+    }
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid rgba(120,180,200,0.08);
+      font-size: 0.9rem;
+    }
+    .kv-row span:first-child { color: var(--muted); }
+    .kv-row span:last-child {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      text-align: right;
+      word-break: break-all;
+    }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+    }
+    .tag.on { color: var(--good); border-color: rgba(52,211,153,.35); }
+    .tag.off { color: var(--bad); border-color: rgba(251,113,133,.3); }
+
+    .chart-box { height: 160px; margin-top: 0.5rem; }
+
+    .logs {
+      max-height: 280px;
+      overflow: auto;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      display: grid;
+      gap: 0.35rem;
+    }
+    .log-line {
+      display: grid;
+      grid-template-columns: 72px 54px 1fr;
+      gap: 0.55rem;
+      padding: 0.4rem 0.5rem;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.18);
+    }
+    .log-line .lvl-info { color: var(--accent-2); }
+    .log-line .lvl-warn { color: var(--warn); }
+    .log-line .lvl-error { color: var(--bad); }
+    .log-line .time { color: var(--muted); }
+
+    footer {
+      margin-top: 1.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .err {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.9rem 1rem;
+      border-radius: 14px;
+      border: 1px solid rgba(251,113,133,.35);
+      background: rgba(251,113,133,.08);
+      color: #fecdd3;
+    }
+    .err.show { display: block; }
+
+    @media (max-width: 900px) {
+      .card, .card.wide { grid-column: span 12; }
+      .log-line { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="wrap">
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand">
+          <h1><span class="mark">Download</span> Bot</h1>
+          <p>Theo dõi session Facebook, uptime và chống die — refresh tự động mỗi 15 giây.</p>
+        </div>
+        <div class="actions">
+          <button type="button" id="btnRefresh">Refresh</button>
+          <button type="button" id="btnCopy">Copy JSON</button>
+        </div>
+      </div>
+
+      <div class="status-banner" id="banner">
+        <div class="dot warn" id="dot"></div>
+        <div>
+          <strong id="bannerTitle">Đang tải…</strong>
+          <div class="meta" id="bannerMeta">—</div>
+        </div>
+      </div>
+      <div class="err" id="errBox"></div>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Session</h2>
+        <p class="stat" id="sessionState">—</p>
+        <p class="sub" id="sessionUser">—</p>
+        <div class="tags" id="sessionTags"></div>
+      </article>
+
+      <article class="card">
+        <h2>Uptime</h2>
+        <p class="stat mono" id="uptime">—</p>
+        <p class="sub" id="uptimeSub">Process uptime</p>
+      </article>
+
+      <article class="card">
+        <h2>Memory</h2>
+        <p class="stat mono" id="mem">—</p>
+        <p class="sub" id="memSub">—</p>
+        <div class="chart-box"><canvas id="memChart"></canvas></div>
+      </article>
+
+      <article class="card wide">
+        <h2>Runtime</h2>
+        <div class="kv" id="runtimeKv"></div>
+      </article>
+
+      <article class="card">
+        <h2>Anti-die</h2>
+        <div class="kv" id="antiKv"></div>
+        <div class="tags" id="antiTags"></div>
+      </article>
+
+      <article class="card full">
+        <h2>Recent logs</h2>
+        <div class="logs" id="logs">Chưa có log.</div>
+      </article>
+    </section>
+
+    <footer>
+      <span id="footLeft">bot-download-video</span>
+      <span id="footRight">API · /api/status</span>
+    </footer>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token') || localStorage.getItem('dashboard_token') || '';
+    if (params.get('token')) localStorage.setItem('dashboard_token', params.get('token'));
+
+    let memChart;
+    let lastPayload = null;
+
+    function fmtUptime(sec) {
+      sec = Math.max(0, Math.floor(sec || 0));
+      const d = Math.floor(sec / 86400);
+      const h = Math.floor((sec % 86400) / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      const parts = [];
+      if (d) parts.push(d + 'd');
+      if (h || d) parts.push(h + 'h');
+      parts.push(m + 'm', s + 's');
+      return parts.join(' ');
+    }
+
+    function fmtTime(ts) {
+      if (!ts) return '—';
+      return new Date(ts).toLocaleString('vi-VN');
+    }
+
+    function apiUrl() {
+      const u = new URL('/api/status', location.origin);
+      if (token) u.searchParams.set('token', token);
+      return u.toString();
+    }
+
+    function setKv(el, rows) {
+      el.innerHTML = rows
+        .map(([k, v]) => `<div class="kv-row"><span>${k}</span><span>${v ?? '—'}</span></div>`)
+        .join('');
+    }
+
+    function render(data) {
+      lastPayload = data;
+      const alive = data.session?.alive;
+      const ready = data.bot?.ready;
+      const dot = document.getElementById('dot');
+      const title = document.getElementById('bannerTitle');
+      const meta = document.getElementById('bannerMeta');
+
+      dot.className = 'dot ' + (alive === true ? 'ok' : alive === false ? 'bad' : 'warn');
+      title.textContent =
+        alive === true
+          ? `${data.bot?.name || 'Bot'} · Session OK`
+          : alive === false
+            ? `${data.bot?.name || 'Bot'} · SESSION DIE`
+            : `${data.bot?.name || 'Bot'} · đang chờ check`;
+      meta.textContent = `ready=${ready} · check ${fmtTime(data.session?.lastCheckAt)} · refresh ${fmtTime(data.refreshedAt)}`;
+
+      document.getElementById('sessionState').textContent =
+        alive === true ? 'Alive' : alive === false ? 'Dead' : 'Unknown';
+      document.getElementById('sessionUser').textContent = data.session?.userName
+        ? `User: ${data.session.userName}`
+        : 'Chưa có tên user';
+
+      const tags = document.getElementById('sessionTags');
+      tags.innerHTML = '';
+      const addTag = (text, cls) => {
+        const s = document.createElement('span');
+        s.className = 'tag ' + (cls || '');
+        s.textContent = text;
+        tags.appendChild(s);
+      };
+      addTag(ready ? 'botReady' : 'not ready', ready ? 'on' : 'off');
+      if (data.session?.lastError) addTag('err: ' + String(data.session.lastError).slice(0, 40), 'off');
+      addTag('fails: ' + (data.session?.consecutiveFails ?? 0));
+
+      document.getElementById('uptime').textContent = fmtUptime(data.runtime?.uptimeSec);
+      document.getElementById('uptimeSub').textContent =
+        `Process ${fmtUptime(data.runtime?.processUptimeSec)} · PID ${data.runtime?.pid ?? '—'}`;
+
+      const mem = data.runtime?.memory || {};
+      document.getElementById('mem').textContent = `${mem.usedPercent ?? '—'}%`;
+      document.getElementById('memSub').textContent = `${mem.usedLabel || '—'} / ${mem.totalLabel || '—'}`;
+
+      if (window.Chart) {
+        const ctx = document.getElementById('memChart');
+        const used = mem.usedPercent ?? 0;
+        const free = Math.max(0, 100 - used);
+        if (memChart) {
+          memChart.data.datasets[0].data = [used, free];
+          memChart.update('none');
+        } else {
+          memChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              labels: ['Used', 'Free'],
+              datasets: [{
+                data: [used, free],
+                backgroundColor: ['#2dd4bf', 'rgba(127,158,170,0.25)'],
+                borderWidth: 0
+              }]
+            },
+            options: {
+              cutout: '72%',
+              plugins: { legend: { display: false } },
+              animation: { duration: 400 }
+            }
+          });
+        }
+      }
+
+      setKv(document.getElementById('runtimeKv'), [
+        ['Bot', data.bot?.name],
+        ['Prefix', data.bot?.prefix],
+        ['FCA', data.bot?.fca],
+        ['Node', data.runtime?.node],
+        ['Host', data.runtime?.hostname],
+        ['Platform', data.runtime?.platform],
+        ['CPU / Load', `${data.runtime?.cpus ?? '—'} · ${(data.runtime?.loadAvg || []).join(' / ')}`],
+        ['Last OK', fmtTime(data.session?.lastOkAt)],
+        ['Last error', data.session?.lastError || '—']
+      ]);
+
+      const anti = data.antiDie || {};
+      setKv(document.getElementById('antiKv'), [
+        ['Session check', `${anti.sessionCheckInterval ?? 5} min`],
+        ['Send delay', `${anti.sendDelayMs ?? '—'} ms`],
+        ['Download concurrency', anti.downloadConcurrency],
+        ['URL cooldown', `${Math.round((anti.downloadCooldownMs || 0) / 1000)}s`],
+        ['Login delay', `${anti.loginDelayMs ?? '—'} ms`],
+        ['Proxy', anti.proxy || 'direct']
+      ]);
+      const antiTags = document.getElementById('antiTags');
+      antiTags.innerHTML = '';
+      const t1 = document.createElement('span');
+      t1.className = 'tag ' + (anti.proxyEnabled ? 'on' : 'off');
+      t1.textContent = anti.proxyEnabled ? 'proxy on' : 'proxy off';
+      antiTags.appendChild(t1);
+      const t2 = document.createElement('span');
+      t2.className = 'tag ' + (anti.autoRestart ? 'warn' : 'on');
+      t2.textContent = anti.autoRestart ? 'auto-restart on' : 'auto-restart off';
+      antiTags.appendChild(t2);
+
+      const logs = data.logs || [];
+      const logsEl = document.getElementById('logs');
+      if (!logs.length) {
+        logsEl.textContent = 'Chưa có log.';
+      } else {
+        logsEl.innerHTML = logs
+          .map((l) => {
+            const t = new Date(l.at).toLocaleTimeString('vi-VN');
+            const lvl = (l.level || 'info').toLowerCase();
+            return `<div class="log-line"><span class="time">${t}</span><span class="lvl-${lvl}">${lvl}</span><span>${escapeHtml(l.message)}</span></div>`;
+          })
+          .join('');
+      }
+
+      document.getElementById('footLeft').textContent =
+        `${data.service || 'bot'} · auth ${data.authRequired ? 'on' : 'off'}`;
+      document.getElementById('footRight').textContent = `Updated ${fmtTime(data.refreshedAt)}`;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    async function load() {
+      const errBox = document.getElementById('errBox');
+      try {
+        const res = await fetch(apiUrl(), { cache: 'no-store' });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        errBox.classList.remove('show');
+        render(data);
+      } catch (e) {
+        errBox.textContent = 'Không tải được /api/status: ' + e.message;
+        errBox.classList.add('show');
+      }
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', load);
+    document.getElementById('btnCopy').addEventListener('click', async () => {
+      if (!lastPayload) return;
+      await navigator.clipboard.writeText(JSON.stringify(lastPayload, null, 2));
+      document.getElementById('btnCopy').textContent = 'Copied!';
+      setTimeout(() => (document.getElementById('btnCopy').textContent = 'Copy JSON'), 1200);
+    });
+
+    load();
+    setInterval(load, 15000);
+  </script>
+</body>
+</html>

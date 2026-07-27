@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 const gradient = require('gradient-string');
-const { setBotReady, setSessionStatus } = require('./webServer');
+const { setBotReady, setSessionStatus, pushLog } = require('./webServer');
 
 const boldText = (text) => chalk.bold(text);
 
@@ -141,6 +141,7 @@ async function handleDead(api, err) {
 
     const detail = err?.error || err?.message || err?.errorSummary || 'unknown';
     console.error(boldText(gradient.passion(`[session] APPSTATE DIE — ${detail}`)));
+    pushLog('error', `Session DIE: ${detail}`);
 
     await notifyAdmins(
         api,
@@ -188,6 +189,7 @@ async function runCheck() {
                 )
             )
         );
+        pushLog('info', `Session OK — ${profile.name || 'user'}`);
     } catch (err) {
         consecutiveFails += 1;
         lastError = err?.error || err?.message || String(err);

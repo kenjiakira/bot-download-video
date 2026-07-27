@@ -48,6 +48,16 @@ Edit `admin.json`:
 | `AUTO_RESTART_ENABLED` | Restart định kỳ 3h30 (`true`/`false`, mặc định tắt) |
 | `PROXY_URL` | Proxy cố định (ưu tiên cao nhất) |
 | `PROXY_ENABLED` | `true` mới đọc `prox.txt` (mặc định `false`) |
+| `DASHBOARD_TOKEN` | Token bảo vệ dashboard (`/?token=...`) |
+
+## Dashboard web
+
+Mở `https://<app>.onrender.com/` (hoặc `/?token=YOUR_TOKEN` nếu đã set `DASHBOARD_TOKEN`).
+
+- UI: [`public/dashboard.html`](public/dashboard.html) — Sora + Chart.js, auto refresh 15s
+- API: `GET /api/status` — session, runtime, anti-die, logs
+- UptimeRobot vẫn dùng `/ping` (không cần token)
+
 | `FB_USER_AGENT` | User-Agent cố định |
 | `LOGIN_DELAY_MS` | Delay trước login (mặc định 3000) |
 | `SEND_DELAY_MS` | Khoảng cách tối thiểu giữa 2 lần gửi tin (2500) |

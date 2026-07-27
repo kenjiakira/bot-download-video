@@ -210,6 +210,10 @@ const loadEventCommands = () => {
                 }
 
                 console.log(boldText(gradient.retro('LOGGED IN VIA APPSTATE')));
+                try {
+                    const { pushLog } = require('./utils/webServer');
+                    pushLog('info', 'Logged in via appstate');
+                } catch (_) {}
                 if (proxy) {
                     console.log(boldText(gradient.retro('Proxy: ' + proxy)));
                 }
