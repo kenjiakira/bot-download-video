@@ -6,6 +6,9 @@ const ytdl = require('@distube/ytdl-core');
 const getFBInfo = require('@xaviabot/fb-downloader');
 const { ZM_API, TIKTOK_API } = require('../utils/api');
 const Downloader = require('../utils/downloader');
+const { createQueuedApi } = require('../utils/sendQueue');
+const { canDownload, markDownload, withDownloadSlot } = require('../utils/downloadGuard');
+const { getUserAgent } = require('../utils/fingerprint');
 
 const cacheDir = path.join(__dirname, 'cache');
 if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
@@ -28,7 +31,7 @@ async function resolveTikTokShortUrl(url) {
                 maxRedirects: 5,
                 validateStatus: null,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    'User-Agent': getUserAgent()
                 }
             });
 
@@ -78,13 +81,29 @@ module.exports = {
 
         if (!urls) return;
 
+        const qApi = createQueuedApi(api);
+        // Chỉ xử lý 1 link/tin để giảm spam gửi attachment
+        const maxLinks = Math.max(1, parseInt(process.env.DOWNLOAD_MAX_LINKS_PER_MSG || '1', 10));
+        let handled = 0;
+
         for (const url of urls) {
+            if (handled >= maxLinks) break;
+
             for (const [platform, pattern] of Object.entries(patterns)) {
                 if (pattern.test(url)) {
                     if (platform === 'douyin' && !url.includes('douyin.com')) continue;
 
-                    let handler;
+                    const gate = canDownload(event.threadID, url);
+                    if (!gate.ok) {
+                        const tip =
+                            gate.reason === 'cooldown'
+                                ? `⏳ Link này vừa tải rồi, thử lại sau ~${gate.retryAfterSec}s`
+                                : `⏳ Nhóm đang tải quá nhiều, thử lại sau ~${gate.retryAfterSec}s`;
+                        qApi.sendMessage(tip, event.threadID);
+                        return;
+                    }
 
+                    let handler;
                     switch (platform) {
                         case 'capcut': handler = handleCapCut; break;
                         case 'facebook': handler = handleFacebook; break;
@@ -100,7 +119,9 @@ module.exports = {
                     }
 
                     if (handler) {
-                        await handler(url, api, event);
+                        markDownload(event.threadID, url);
+                        handled += 1;
+                        await withDownloadSlot(() => handler(url, qApi, event));
                     }
                     break;
                 }
@@ -389,7 +410,7 @@ async function handleTwitter(url, api, event) {
         processingMsg = await sendProcessingMessage(api, event.threadID, "⏳ Đang tải nội dung từ Twitter...");
         
         const data = await Downloader.getMediaInfo(url);
-        const downloads = await Downloader.downloadMultipleMedia(data.medias, 'twitter', 4);
+        const downloads = await Downloader.downloadMultipleMedia(data.medias, 'twitter', 2);
 
         await processingMsg.remove();
         await api.sendMessage({
@@ -409,7 +430,7 @@ async function handleWeibo(url, api, event) {
         processingMsg = await sendProcessingMessage(api, event.threadID, "⏳ Đang tải nội dung từ Weibo...");
         
         const data = await Downloader.getMediaInfo(url);
-        const downloads = await Downloader.downloadMultipleMedia(data.medias, 'weibo', 20);
+        const downloads = await Downloader.downloadMultipleMedia(data.medias, 'weibo', 3);
 
         await processingMsg.remove();
         await api.sendMessage({
@@ -429,7 +450,7 @@ async function handleXHS(url, api, event) {
         processingMsg = await sendProcessingMessage(api, event.threadID, "⏳ Đang tải nội dung từ Xiaohongshu...");
         
         const data = await Downloader.getMediaInfo(url);
-        const downloads = await Downloader.downloadMultipleMedia(data.medias, 'xhs', 10);
+        const downloads = await Downloader.downloadMultipleMedia(data.medias, 'xhs', 3);
 
         await processingMsg.remove();
         await api.sendMessage({
@@ -463,7 +484,7 @@ async function handleThreads(url, api, event) {
             }, event.threadID, () => downloads.forEach(d => fs.unlinkSync(d.path)));
         }
         else if (images.length > 0) {
-            const downloads = await Downloader.downloadMultipleMedia(images, 'threads', 10);
+            const downloads = await Downloader.downloadMultipleMedia(images, 'threads', 3);
             await processingMsg.remove();
             await api.sendMessage({
                 body: `=== 𝗧𝗵𝗿𝗲𝗮𝗱𝘀 ===\n\n👤 Author: ${data.author}\n💬 Content: ${data.title}`,

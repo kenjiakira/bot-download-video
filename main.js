@@ -9,10 +9,11 @@ const gradient = require('gradient-string');
 const { handleListenEvents } = require('./utils/listen');
 const { logSummary } = require('./utils/ensureFiles');
 const { startWebServer, setBotReady } = require('./utils/webServer');
+const { startSessionGuard } = require('./utils/sessionGuard');
+const { resolveStableProxy, getLoginOptions } = require('./utils/fingerprint');
 
 const boldText = (text) => chalk.bold(text);
 
-/** On Render: set APPSTATE env to raw JSON if you cannot upload appstate.json */
 function ensureAppStateFile(appstatePath) {
     if (fs.existsSync(appstatePath)) return appstatePath;
 
@@ -42,12 +43,7 @@ try {
     console.warn('Could not load FCA config from', configPath, e.message);
 }
 
-const proxyList = fs.existsSync('./utils/prox.txt')
-    ? fs.readFileSync('./utils/prox.txt', 'utf-8').split('\n').filter(Boolean)
-    : [];
-const proxy = proxyList.length
-    ? proxyList[Math.floor(Math.random() * proxyList.length)]
-    : null;
+const proxy = resolveStableProxy({ rotate: false });
 
 const login = require(path.join(__dirname, 'logins', fcaName, 'index.js'));
 
@@ -106,7 +102,6 @@ const loadEventCommands = () => {
 
 (async () => {
     try {
-        // Start HTTP first so Render health checks / UptimeRobot always get a response
         await startWebServer();
 
         const startBot = async () => {
@@ -148,15 +143,23 @@ const loadEventCommands = () => {
                 process.exit(1);
             }
 
-            const loginOptions = {
-                appState: JSON.parse(fs.readFileSync(appstatePath, 'utf8')),
-                logLevel: 'silent',
-                forceLogin: true,
-                userAgent:
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                autoMarkDelivery: false,
-                autoMarkRead: false
-            };
+            const loginDelay = Math.max(0, parseInt(process.env.LOGIN_DELAY_MS || '3000', 10));
+            if (loginDelay > 0) {
+                console.log(boldText(gradient.cristal(`Waiting ${loginDelay}ms before login...`)));
+                await new Promise((r) => setTimeout(r, loginDelay));
+            }
+
+            const loginOptions = getLoginOptions(JSON.parse(fs.readFileSync(appstatePath, 'utf8')));
+            if (proxy && typeof loginOptions === 'object') {
+                // hut-chat-api đọc proxy qua setProxy nếu được gọi; lưu global cho FCA utils
+                global.cc.proxy = proxy;
+                try {
+                    const fcaUtils = require(path.join(__dirname, 'logins', fcaName, 'utils.js'));
+                    if (fcaUtils && typeof fcaUtils.setProxy === 'function') {
+                        fcaUtils.setProxy(proxy);
+                    }
+                } catch (_) {}
+            }
 
             login(loginOptions, async function (err, api) {
                 if (err) {
@@ -177,10 +180,20 @@ const loadEventCommands = () => {
 
                 try {
                     const { startAutoRestart } = require('./utils/autoRestart');
-                    startAutoRestart(api);
-                    console.log(boldText(gradient.cristal('Auto Restart enabled')));
+                    if (process.env.AUTO_RESTART_ENABLED === 'true') {
+                        startAutoRestart(api);
+                        console.log(boldText(gradient.cristal('Auto Restart enabled')));
+                    } else {
+                        console.log(boldText(gradient.cristal('Auto Restart disabled (set AUTO_RESTART_ENABLED=true to enable)')));
+                    }
                 } catch (error) {
                     console.error('Failed to initialize Auto Restart:', error.message);
+                }
+
+                try {
+                    startSessionGuard(api);
+                } catch (error) {
+                    console.error('Failed to start session guard:', error.message);
                 }
 
                 console.log(boldText(gradient.retro('LOGGED IN VIA APPSTATE')));

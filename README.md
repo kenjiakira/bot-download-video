@@ -43,10 +43,46 @@ Edit `admin.json`:
 | `JSONBIN_BIN_ID` | Bin ID trên [JSONBin.io](https://jsonbin.io) |
 | `JSONBIN_MASTER_KEY` | Master Key (private bin) |
 | `APPSTATE_SYNC_*` | Bật/tắt sync, chu kỳ kiểm tra (mặc định 15 phút) |
+| `SESSION_CHECK_INTERVAL` | Phút giữa mỗi lần tự check session còn sống (mặc định 5) |
+| `SESSION_FAIL_THRESHOLD` | Số lần fail liên tiếp trước khi báo DIE (mặc định 2) |
+| `AUTO_RESTART_ENABLED` | Restart định kỳ 3h30 (`true`/`false`, mặc định tắt) |
+| `PROXY_URL` | Proxy cố định (không random mỗi boot) |
+| `FB_USER_AGENT` | User-Agent cố định |
+| `LOGIN_DELAY_MS` | Delay trước login (mặc định 3000) |
+| `SEND_DELAY_MS` | Khoảng cách tối thiểu giữa 2 lần gửi tin (2500) |
+| `SEND_ATTACHMENT_EXTRA_MS` | Thêm delay khi gửi kèm file (2000) |
+| `DOWNLOAD_CONCURRENCY` | Số download song song (1) |
+| `DOWNLOAD_COOLDOWN_MS` | Cooldown cùng URL+thread (120000 = 2 phút) |
+| `DOWNLOAD_MAX_PER_THREAD` | Max download / nhóm / cửa sổ thời gian (3) |
+| `DOWNLOAD_MAX_LINKS_PER_MSG` | Max link xử lý mỗi tin (1) |
 | `TIKTOK_API_BASE_URL` | TikTok API (default tikwm) |
 | `ZM_API_BASE_URL` / `ZM_API_KEY` | Social autolink API |
 | `CAPCUT_API_BASE_URL` | CapCut download API |
 | `APPSTATE` | Fallback: appstate JSON string (nếu không dùng JSONBin) |
+
+## Chống die (biện pháp mềm)
+
+- **Fingerprint ổn định**: proxy không random; UA Chrome 131 cố định; tắt mark read/delivery/presence
+- **Rate-limit gửi**: queue `sendMessage` + delay attachment
+- **Rate-limit download**: 1 link/tin, cooldown URL, giới hạn theo nhóm, concurrency = 1
+- **Ít media/lần**: Twitter/Weibo/XHS/Threads tối đa 2–3 file
+- **Tắt auto-restart 3h30** (tránh login lại liên tục)
+- **Session guard 5 phút** + báo admin + poll JSONBin khi die
+
+## Session guard (biết die khi không ai check)
+
+Sau login, bot tự gọi Facebook (`getUserInfo`) mỗi **5 phút**:
+
+- OK → log `[session] OK` + cập nhật `GET /session`
+- DIE (`Not logged in`, checkpoint, …) hoặc fail đủ ngưỡng →:
+  1. Báo tất cả `adminUIDs` trên Messenger
+  2. `botReady=false`, xem tại `GET /session` hoặc `GET /`
+  3. Poll JSONBin lấy cookie mới → có thì restart login lại
+
+```env
+SESSION_CHECK_INTERVAL=5
+SESSION_FAIL_THRESHOLD=2
+```
 
 ## Appstate qua JSONBin.io
 
@@ -75,7 +111,8 @@ Cập nhật cookie: chỉ cần sửa bin trên JSONBin, không cần redeploy 
 npm start
 ```
 
-HTTP keep-alive: `GET /`, `/health`, `/ping` → dùng cho UptimeRobot.
+HTTP keep-alive: `GET /`, `/health`, `/ping`, `/session` → UptimeRobot dùng `/ping`.
+
 
 Sends a supported link in any chat with the bot → media is downloaded and sent back.
 
@@ -98,11 +135,12 @@ Có thể dùng `render.yaml` trong repo (Blueprint) để tạo service nhanh h
 ## Layout
 
 ```
-main.js              # Express keep-alive + login + listen
-utils/webServer.js   # / /health /ping
-events/atd.js        # auto-download handlers
-utils/downloader.js
-utils/listen.js
-logins/<FCA>/        # Messenger login backends
-render.yaml          # Render Blueprint
+main.js                 # Express + login + listen
+utils/webServer.js      # / /health /ping /session
+utils/sessionGuard.js   # check session mỗi 5 phút
+utils/fingerprint.js    # proxy/UA ổn định
+utils/sendQueue.js      # rate-limit sendMessage
+utils/downloadGuard.js  # cooldown + concurrency download
+events/atd.js           # auto-download
+render.yaml
 ```
