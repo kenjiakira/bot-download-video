@@ -1,0 +1,24 @@
+{
+  "prefix": "/",
+  "adminUIDs": [
+    "61573427362389",
+    "100092325757607",
+    "61585941681660",
+    "61563982612558"
+  ],
+  "moderatorUIDs": [
+    "100028202556430"
+  ],
+  "supportUIDs": [],
+  "feedbackGroupID": [],
+  "botName": "Download Bot",
+  "ownerName": "Kenji Akira",
+  "facebookLink": "61573427362389",
+  "resend": false,
+  "notilogs": true,
+  "appstate": "./appstate.json",
+  "restart": true,
+  "restartTime": 50,
+  "FCA": "hut-chat-api",
+  "mtnMode": false
+}

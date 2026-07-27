@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: bot-download-video
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "18"
+      - key: TIKTOK_API_BASE_URL
+        value: https://www.tikwm.com/api/
+      - key: JSONBIN_BIN_ID
+        sync: false
+      - key: JSONBIN_MASTER_KEY
+        sync: false
+      - key: APPSTATE_SYNC_ENABLED
+        value: "true"
+      - key: ZM_API_BASE_URL
+        sync: false
+      - key: ZM_API_KEY
+        sync: false

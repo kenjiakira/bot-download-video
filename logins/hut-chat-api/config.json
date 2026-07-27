@@ -1,0 +1,23 @@
+{
+    "APPSTATE_PATH": "./appstate.json",
+    "COOKIE_PATH": "./fbcookie.json",
+    "PREFER_COOKIES": true,
+    "APPSTATE_PROTECTION": true,
+    "AUTO_PING_SERVER": true,
+    "ALLOW_INBOX": false,
+    "DATABASE": "JSON",
+    "DATABASE_JSON_BEAUTIFY": false,
+    "MAX_RETRY_ATTEMPTS": 3,
+    "RETRY_DELAY_MS": 10000,
+    "AUTO_RESTART_ON_ERROR": true,
+    "FCA_OPTIONS": {
+        "pauseLog": false,
+        "selfListen": false,
+        "listenEvents": true,
+        "forceLogin": true,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "logLevel": "silent",
+        "autoMarkRead": false,
+        "autoMarkDelivery": false
+    }
+}

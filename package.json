@@ -1,0 +1,41 @@
+{
+  "name": "bot-download-video",
+  "version": "1.0.0",
+  "description": "Facebook Messenger bot — auto-download videos/media from shared links",
+  "main": "index.js",
+  "scripts": {
+    "start": "node main.js",
+    "dev": "node main.js",
+    "supervisor": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "messenger",
+    "download",
+    "tiktok",
+    "youtube",
+    "facebook",
+    "render"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.6",
+    "@xaviabot/fb-downloader": "^1.0.14",
+    "axios": "^1.6.2",
+    "bluebird": "^3.7.2",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "fs-extra": "^11.2.0",
+    "gradient-string": "^2.0.2",
+    "mqtt": "^4.3.7",
+    "npmlog": "^7.0.1",
+    "request": "^2.88.2",
+    "websocket-stream": "^5.5.2",
+    "ws3-fca": "^2.0.1"
+  }
+}
