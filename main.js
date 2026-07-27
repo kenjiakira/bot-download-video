@@ -66,6 +66,26 @@ global.cc = {
     getCurrentPrefix: () => global.cc.prefix
 };
 
+const loadCommands = () => {
+    const commands = {};
+    const commandsDir = path.join(__dirname, 'commands');
+    if (!fs.existsSync(commandsDir)) return commands;
+
+    fs.readdirSync(commandsDir).sort().forEach((file) => {
+        if (!file.endsWith('.js')) return;
+        try {
+            const command = require(`./commands/${file}`);
+            if (!command.name) return;
+            commands[command.name] = command;
+            global.cc.module.commands[command.name] = command;
+            console.log(boldText(gradient.cristal(`[ ${command.name} ] Command ready`)));
+        } catch (error) {
+            console.error(boldText(gradient.passion(`[ ${file} ] Failed to load command:`)), error.message);
+        }
+    });
+    return commands;
+};
+
 const loadEventCommands = () => {
     const eventCommands = {};
     const eventsDir = path.join(__dirname, 'events');
@@ -181,11 +201,14 @@ const loadEventCommands = () => {
                     console.error(boldText(gradient.passion('Appstate sync failed:')), error.message);
                 }
 
+                console.log(boldText(gradient.vice('━━━━━━━[ COMMANDS ]━━━━━━━━━━━')));
+                const commands = loadCommands();
                 console.log(boldText(gradient.morning('━━━━━━━[ EVENTS ]━━━━━━━━━━━')));
                 const eventCommands = loadEventCommands();
 
                 console.log(boldText(gradient.cristal(`BOT: ${adminConfig.botName || 'Download Bot'}`)));
-                console.log(boldText(gradient.cristal('Mode: auto-download only (send a link)')));
+                console.log(boldText(gradient.cristal(`Prefix: ${global.cc.prefix}`)));
+                console.log(boldText(gradient.cristal('Mode: auto-download + commands')));
 
                 if (fs.existsSync('./database/autoRestart.json')) {
                     try {
@@ -209,9 +232,9 @@ const loadEventCommands = () => {
 
                 logSummary();
                 setBotReady(true);
-                console.error(boldText(gradient.summer('[ BOT IS LISTENING — auto-download ]')));
+                console.error(boldText(gradient.summer('[ BOT IS LISTENING — download + commands ]')));
 
-                handleListenEvents(api, {}, eventCommands);
+                handleListenEvents(api, commands, eventCommands);
             });
         };
 
