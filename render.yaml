@@ -7,7 +7,7 @@ services:
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
-        value: "18"
+        value: "20"
       - key: TIKTOK_API_BASE_URL
         value: https://www.tikwm.com/api/
       - key: JSONBIN_BIN_ID

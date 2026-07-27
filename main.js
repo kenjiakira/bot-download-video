@@ -119,8 +119,7 @@ const loadEventCommands = () => {
                     console.log(boldText(gradient.cristal('Checking appstate from JSONBin.io...')));
                     const updated = await checkAppStateBeforeLogin();
                     if (updated) {
-                        console.log(boldText(gradient.retro('Appstate updated, restarting...')));
-                        return;
+                        console.log(boldText(gradient.retro('Appstate synced — tiếp tục đăng nhập')));
                     }
                 } else if (isSyncEnabled() && !syncCfg.url) {
                     console.warn(

@@ -275,7 +275,7 @@ async function checkAppStateBeforeLogin(syncURL = null, apiKey = null) {
 
     try {
         console.log(boldText(gradient.cristal('🔍 Kiểm tra appstate từ JSONBin.io trước khi đăng nhập...')));
-        const updated = await checkAndUpdateAppState(url, key, true, keyType);
+        const updated = await checkAndUpdateAppState(url, key, false, keyType);
         return updated;
     } catch (error) {
         console.error(boldText(gradient.passion('❌ Lỗi kiểm tra appstate:')), error.message);
