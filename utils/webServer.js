@@ -309,6 +309,61 @@ function startWebServer() {
         res.json({ ok: true, logs: recentLogs.slice(0, limit) });
     });
 
+    app.post('/api/actions/check-session', requireAuth, async (_req, res) => {
+        try {
+            const { runCheck, getSessionGuardInfo } = require('./sessionGuard');
+            const guard = getSessionGuardInfo();
+            if (!guard.running) {
+                return res.status(400).json({ ok: false, error: 'Bot chưa sẵn sàng' });
+            }
+            pushLog('info', 'Kiểm tra session (dashboard)');
+            await runCheck();
+            const payload = buildStatusPayload();
+            return res.json({
+                ok: true,
+                session: payload.session,
+                health: payload.health,
+                message: payload.session?.alive ? 'Session OK' : 'Session lỗi'
+            });
+        } catch (error) {
+            pushLog('error', `Kiểm tra session thất bại: ${error.message}`);
+            return res.status(500).json({ ok: false, error: error.message });
+        }
+    });
+
+    app.post('/api/actions/sync-appstate', requireAuth, async (_req, res) => {
+        try {
+            const { checkAndUpdateAppState, getSyncConfig, isSyncEnabled } = require('./appstateSync');
+            const cfg = getSyncConfig();
+            if (!isSyncEnabled() || !cfg.url) {
+                return res.status(400).json({ ok: false, error: 'Chưa bật sync JSONBin' });
+            }
+            pushLog('info', 'Sync appstate (dashboard)');
+            const updated = await checkAndUpdateAppState(
+                cfg.url,
+                cfg.apiKey,
+                false,
+                cfg.keyType || 'master',
+                true
+            );
+            return res.json({
+                ok: true,
+                updated: Boolean(updated),
+                message: updated ? 'Đã cập nhật appstate' : 'Appstate không đổi'
+            });
+        } catch (error) {
+            pushLog('error', `Sync appstate thất bại: ${error.message}`);
+            return res.status(500).json({ ok: false, error: error.message });
+        }
+    });
+
+    app.post('/api/actions/restart', requireAuth, (_req, res) => {
+        pushLog('warn', 'Restart bot (dashboard)');
+        setBotReady(false);
+        res.json({ ok: true, message: 'Bot đang khởi động lại…' });
+        setTimeout(() => process.exit(1), 1200);
+    });
+
     app.get('/session', requireAuth, (_req, res) => {
         res.status(200).json({ botReady, ...sessionStatus });
     });

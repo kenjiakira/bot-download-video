@@ -208,7 +208,7 @@ function loadLastCheck() {
     return null;
 }
 
-async function checkAndUpdateAppState(syncURL, apiKey = null, shouldRestart = false, keyType = 'master') {
+async function checkAndUpdateAppState(syncURL, apiKey = null, shouldRestart = false, keyType = 'master', rethrow = false) {
     if (!syncURL) {
         return false;
     }
@@ -253,6 +253,7 @@ async function checkAndUpdateAppState(syncURL, apiKey = null, shouldRestart = fa
         
     } catch (error) {
         console.error(boldText(gradient.passion('❌ Lỗi khi đồng bộ appstate:')), error.message);
+        if (rethrow) throw error;
         return false;
     }
 }

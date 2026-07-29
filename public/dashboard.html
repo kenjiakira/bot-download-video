@@ -53,6 +53,8 @@
       transition: border-color .2s, background .2s, transform .15s;
     }
     button:hover { border-color: rgba(45,212,191,.45); background: rgba(45,212,191,.08); }
+    button.danger { border-color: rgba(251,113,133,.35); color: #fecdd3; }
+    button.danger:hover { border-color: rgba(251,113,133,.55); background: rgba(251,113,133,.1); }
     button:active { transform: scale(0.98); }
     .tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     .tab {
@@ -146,9 +148,12 @@
       <div class="brand-row">
         <div class="brand">
           <h1><span class="mark">Download</span> Bot</h1>
-          <p>Session, uptime, chống die — và tab Console xem lệnh realtime.</p>
+          <p>Giám sát bot và xem log realtime.</p>
         </div>
         <div class="actions">
+          <button type="button" id="btnCheckSession">Kiểm tra session</button>
+          <button type="button" id="btnSyncAppstate">Sync appstate</button>
+          <button type="button" id="btnRestart" class="danger">Restart</button>
           <button type="button" id="btnRefresh">Refresh</button>
           <button type="button" id="btnLogout">Logout</button>
         </div>
@@ -222,7 +227,7 @@
 
     <footer>
       <span id="footLeft">bot-download-video</span>
-      <span id="footRight">API · /api/status</span>
+      <span id="footRight">—</span>
     </footer>
   </div>
 
@@ -387,12 +392,15 @@
       });
 
       renderLogs(data.logs || []);
-      document.getElementById('footLeft').textContent = `${data.service || 'bot'} · cookie session`;
-      document.getElementById('footRight').textContent = `Updated ${fmtTime(data.refreshedAt)} · ${ (data.logs||[]).length } logs`;
+      document.getElementById('footLeft').textContent = data.service || 'bot-download-video';
+      document.getElementById('footRight').textContent = `Cập nhật ${fmtTime(data.refreshedAt)}`;
     }
 
     async function load() {
       const errBox = document.getElementById('errBox');
+      errBox.style.borderColor = '';
+      errBox.style.background = '';
+      errBox.style.color = '';
       try {
         const res = await fetch('/api/status', opts);
         if (res.status === 401) {
@@ -413,6 +421,87 @@
     }
 
     document.getElementById('btnRefresh').addEventListener('click', load);
+
+    async function runAction(url, btn, busyText) {
+      const prev = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = busyText;
+      const errBox = document.getElementById('errBox');
+      try {
+        const res = await fetch(url, { method: 'POST', ...opts });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          location.href = '/login?next=' + encodeURIComponent('/');
+          return;
+        }
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        errBox.classList.remove('show');
+        errBox.textContent = data.message || 'Xong';
+        errBox.style.borderColor = 'rgba(52,211,153,.35)';
+        errBox.style.background = 'rgba(52,211,153,.08)';
+        errBox.style.color = '#a7f3d0';
+        errBox.classList.add('show');
+        setTimeout(() => errBox.classList.remove('show'), 3000);
+        await load();
+      } catch (e) {
+        errBox.style.borderColor = '';
+        errBox.style.background = '';
+        errBox.style.color = '';
+        errBox.textContent = e.message;
+        errBox.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prev;
+      }
+    }
+
+    document.getElementById('btnCheckSession').addEventListener('click', (e) => {
+      runAction('/api/actions/check-session', e.currentTarget, 'Đang kiểm tra…');
+    });
+    document.getElementById('btnSyncAppstate').addEventListener('click', (e) => {
+      runAction('/api/actions/sync-appstate', e.currentTarget, 'Đang sync…');
+    });
+    document.getElementById('btnRestart').addEventListener('click', async (e) => {
+      if (!confirm('Restart bot ngay? Bot sẽ offline vài giây.')) return;
+      const btn = e.currentTarget;
+      const prev = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Đang restart…';
+      const errBox = document.getElementById('errBox');
+      try {
+        const res = await fetch('/api/actions/restart', { method: 'POST', ...opts });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          location.href = '/login?next=' + encodeURIComponent('/');
+          return;
+        }
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        errBox.textContent = data.message || 'Đang khởi động lại…';
+        errBox.style.borderColor = 'rgba(251,191,36,.35)';
+        errBox.style.background = 'rgba(251,191,36,.08)';
+        errBox.style.color = '#fde68a';
+        errBox.classList.add('show');
+        for (let i = 0; i < 40; i++) {
+          await new Promise((r) => setTimeout(r, 3000));
+          try {
+            const h = await fetch('/health', { cache: 'no-store' });
+            if (h.ok) {
+              location.reload();
+              return;
+            }
+          } catch (_) {}
+        }
+        location.reload();
+      } catch (ex) {
+        errBox.style.borderColor = '';
+        errBox.style.background = '';
+        errBox.style.color = '';
+        errBox.textContent = ex.message;
+        errBox.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = prev;
+      }
+    });
     document.getElementById('logFilter').addEventListener('input', () => {
       if (lastPayload) renderLogs(lastPayload.logs || []);
     });
