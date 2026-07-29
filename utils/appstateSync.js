@@ -264,6 +264,157 @@ async function syncAppStateFromRemote(shouldRestart = false) {
     return checkAndUpdateAppState(url, apiKey, shouldRestart, keyType || 'master');
 }
 
+/**
+ * Sync JSONBin → local appstate.json; restart when updated (or forceRestart).
+ * @returns {{ ok: boolean, updated?: boolean, restarting?: boolean, message?: string, error?: string }}
+ */
+async function applyAppStateFromRemote({ forceRestart = false } = {}) {
+    const cfg = getSyncConfig();
+    if (!isSyncEnabled() || !cfg.url) {
+        return { ok: false, error: 'Chưa bật sync JSONBin' };
+    }
+
+    try {
+        const updated = await checkAndUpdateAppState(
+            cfg.url,
+            cfg.apiKey,
+            false,
+            cfg.keyType || 'master',
+            true
+        );
+
+        if (updated) {
+            return {
+                ok: true,
+                updated: true,
+                restarting: true,
+                message: 'Đã cập nhật appstate — bot đang khởi động lại…'
+            };
+        }
+
+        if (forceRestart) {
+            return {
+                ok: true,
+                updated: false,
+                restarting: true,
+                message: 'Appstate không đổi — vẫn restart theo yêu cầu…'
+            };
+        }
+
+        return {
+            ok: true,
+            updated: false,
+            restarting: false,
+            message: 'Appstate không đổi — không cần restart'
+        };
+    } catch (error) {
+        return { ok: false, error: error.message };
+    }
+}
+
+/**
+ * Push local appstate lên JSONBin để không bị poll ghi đè bản cũ.
+ */
+async function pushAppStateToJsonBin(content) {
+    const cfg = getSyncConfig();
+    if (!cfg.binId || !cfg.apiKey) {
+        return { ok: false, skipped: true, error: 'Chưa cấu hình JSONBIN_BIN_ID / MASTER_KEY' };
+    }
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    };
+    if (cfg.keyType === 'access') headers['X-Access-Key'] = cfg.apiKey;
+    else headers['X-Master-Key'] = cfg.apiKey;
+
+    const url = `https://api.jsonbin.io/v3/b/${cfg.binId}`;
+    console.log(boldText(gradient.cristal('⬆️ Đẩy appstate lên JSONBin...')));
+
+    const response = await axios.put(url, content, {
+        timeout: 30000,
+        headers,
+        validateStatus: (status) => status < 500
+    });
+
+    if (response.status !== 200) {
+        throw new Error(`JSONBin PUT HTTP ${response.status}`);
+    }
+
+    console.log(boldText(gradient.retro('✅ Đã cập nhật JSONBin theo appstate mới')));
+    return { ok: true };
+}
+
+/**
+ * Paste appstate JSON (array) từ dashboard → validate → lưu → đẩy JSONBin → restart.
+ */
+async function applyAppStateFromPaste(raw) {
+    try {
+        let content = raw;
+        if (typeof content === 'string') {
+            content = content.trim();
+            if (!content) return { ok: false, error: 'Chưa dán appstate' };
+            content = JSON.parse(content);
+        }
+        if (content && content.record) content = content.record;
+        if (content && content.data && !Array.isArray(content)) content = content.data;
+
+        const validated = validateAppState(content);
+
+        let currentHash = null;
+        if (fs.existsSync(APPSTATE_PATH)) {
+            try {
+                currentHash = getContentHash(JSON.parse(fs.readFileSync(APPSTATE_PATH, 'utf8')));
+            } catch (_) {}
+        }
+        const newHash = getContentHash(validated);
+        const updated = !currentHash || currentHash !== newHash;
+
+        saveAppState(validated);
+        console.log(boldText(gradient.retro('✅ Đã lưu appstate từ dashboard paste')));
+
+        let binPushed = false;
+        let binError = null;
+        try {
+            const push = await pushAppStateToJsonBin(validated);
+            binPushed = Boolean(push.ok);
+            if (push.skipped) {
+                console.log(
+                    boldText(gradient.passion('⚠️ Paste xong nhưng chưa đẩy JSONBin (thiếu config) — tắt APPSTATE_SYNC hoặc cập nhật bin tay'))
+                );
+            }
+        } catch (e) {
+            binError = e.message;
+            console.error(boldText(gradient.passion('❌ Đẩy JSONBin thất bại:')), e.message);
+        }
+
+        // Nếu có JSONBin sync bật mà push fail → không restart (tránh boot rồi bị bin cũ ghi đè)
+        const cfg = getSyncConfig();
+        if (cfg.enabled && cfg.binId && !binPushed) {
+            return {
+                ok: false,
+                error: `Đã lưu file local nhưng đẩy JSONBin lỗi: ${binError || 'unknown'}. Sửa key/bin rồi paste lại — nếu restart lúc này bot sẽ kéo appstate cũ từ bin.`
+            };
+        }
+
+        const msgParts = [
+            updated ? 'Đã lưu appstate mới' : 'Appstate giống file cũ',
+            binPushed ? '· đã cập nhật JSONBin' : '',
+            '— bot đang khởi động lại…'
+        ].filter(Boolean);
+
+        return {
+            ok: true,
+            updated,
+            binPushed,
+            restarting: true,
+            message: msgParts.join(' ')
+        };
+    } catch (error) {
+        return { ok: false, error: error.message };
+    }
+}
+
 async function checkAppStateBeforeLogin(syncURL = null, apiKey = null) {
     const cfg = getSyncConfig();
     const url = syncURL || cfg.url;
@@ -354,6 +505,9 @@ module.exports = {
     checkAndUpdateAppState,
     checkAppStateBeforeLogin,
     syncAppStateFromRemote,
+    applyAppStateFromRemote,
+    applyAppStateFromPaste,
+    pushAppStateToJsonBin,
     getSyncConfig,
     isSyncEnabled,
     setSyncEnabled,

@@ -7,222 +7,195 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
   <style>
     :root {
-      --bg0: #071018;
-      --bg1: #0c1822;
-      --panel: rgba(14, 28, 40, 0.72);
-      --line: rgba(120, 180, 200, 0.14);
-      --text: #e7f3f6;
-      --muted: #7f9eaa;
-      --accent: #2dd4bf;
-      --accent-2: #38bdf8;
-      --good: #34d399;
-      --bad: #fb7185;
-      --warn: #fbbf24;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-      --radius: 22px;
+      --bg: #f4f7f5;
+      --text: #15231c;
+      --muted: #5f7368;
+      --line: #d7e2db;
+      --accent: #0d8f6f;
+      --accent-soft: #e6f5ef;
+      --good: #15803d;
+      --bad: #c2410c;
+      --warn: #b45309;
+      --panel: #fff;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body {
       font-family: "Sora", sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(1200px 600px at 10% -10%, rgba(45, 212, 191, 0.16), transparent 55%),
-        radial-gradient(900px 500px at 100% 0%, rgba(56, 189, 248, 0.12), transparent 50%),
-        linear-gradient(165deg, var(--bg0), var(--bg1) 45%, #08141c);
-      background-attachment: fixed;
+      background: linear-gradient(180deg, #f8fbf9, var(--bg));
     }
-    .noise {
-      pointer-events: none; position: fixed; inset: 0; opacity: 0.035; z-index: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    .wrap { width: min(820px, calc(100% - 1.5rem)); margin: 0 auto; padding: 1.5rem 0 2.5rem; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1.1rem;
     }
-    .wrap { position: relative; z-index: 1; width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 3.5rem; }
-    header.hero { display: grid; gap: 1.1rem; margin-bottom: 1.25rem; animation: rise .7s ease both; }
-    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-    .brand-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
-    .brand h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -0.04em; line-height: 1.1; }
-    .brand .mark { color: var(--accent); font-weight: 700; }
-    .brand p { margin: 0.45rem 0 0; color: var(--muted); max-width: 36rem; line-height: 1.5; }
-    .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-    button, .pill {
-      border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--text);
-      border-radius: 999px; padding: 0.55rem 0.95rem; font: inherit; font-size: 0.85rem; cursor: pointer;
-      transition: border-color .2s, background .2s, transform .15s;
+    .brand h1 { margin: 0; font-size: 1.45rem; letter-spacing: -.03em; }
+    .brand .mark { color: var(--accent); }
+    .top-actions { display: flex; gap: .35rem; }
+    button {
+      border: 1px solid var(--line); background: var(--panel); color: var(--text);
+      border-radius: 9px; padding: .45rem .8rem; font: inherit; font-size: .82rem; cursor: pointer;
     }
-    button:hover { border-color: rgba(45,212,191,.45); background: rgba(45,212,191,.08); }
-    button.danger { border-color: rgba(251,113,133,.35); color: #fecdd3; }
-    button.danger:hover { border-color: rgba(251,113,133,.55); background: rgba(251,113,133,.1); }
-    button:active { transform: scale(0.98); }
-    .tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    button:hover { background: var(--accent-soft); border-color: #b5d0c4; }
+    button:disabled { opacity: .55; cursor: wait; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    button.primary:hover { filter: brightness(1.04); background: var(--accent); }
+    button.danger { color: var(--bad); border-color: #f0c4b0; background: #fff8f5; }
+    button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+    button.ghost:hover { background: #eaf0ec; }
+    .status {
+      display: flex; align-items: flex-start; gap: .75rem; padding: .85rem 0 1rem;
+      border-bottom: 1px solid var(--line); margin-bottom: 1rem;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); margin-top: .35rem; flex-shrink: 0; }
+    .dot.ok { background: var(--good); }
+    .dot.bad { background: var(--bad); }
+    .dot.warn { background: var(--warn); }
+    .status strong { display: block; font-size: .98rem; }
+    .status .meta { color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: .74rem; margin-top: .2rem; }
+    .metrics {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem 1rem;
+      margin-bottom: 1.1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line);
+    }
+    .metric .label { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .metric .value { margin-top: .2rem; font-size: 1.05rem; font-weight: 600; }
+    .metric .hint { margin-top: .15rem; font-size: .78rem; color: var(--muted); }
+    .notice {
+      display: none; margin-bottom: .9rem; padding: .7rem .85rem; border-radius: 10px; font-size: .86rem;
+    }
+    .notice.show { display: block; }
+    .notice.ok { background: #edf9f1; color: #166534; }
+    .notice.warn { background: #fff8eb; color: #92400e; }
+    .notice.err { background: #fff5f0; color: #9a3412; }
+    .tabs { display: flex; gap: .25rem; margin-bottom: 1rem; }
     .tab {
-      border: 1px solid var(--line); background: transparent; color: var(--muted);
-      border-radius: 999px; padding: 0.5rem 1rem; font: inherit; font-size: 0.85rem; cursor: pointer;
+      border: 0; background: transparent; color: var(--muted); border-radius: 8px;
+      padding: .4rem .75rem; font: inherit; font-size: .84rem; cursor: pointer;
     }
-    .tab.active { color: var(--text); border-color: rgba(45,212,191,.4); background: rgba(45,212,191,.1); }
+    .tab.active { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
     .panel { display: none; }
-    .panel.active { display: block; animation: rise .35s ease both; }
-    .status-banner {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem 1.25rem;
-      padding: 1rem 1.2rem; border-radius: var(--radius); border: 1px solid var(--line);
-      background: var(--panel); backdrop-filter: blur(14px); box-shadow: var(--shadow);
+    .panel.active { display: block; }
+    .section-title {
+      margin: 0 0 .55rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
     }
-    .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 6px rgba(127,158,170,.12); }
-    .dot.ok { background: var(--good); box-shadow: 0 0 0 6px rgba(52,211,153,.15); animation: pulse 2s infinite; }
-    .dot.bad { background: var(--bad); box-shadow: 0 0 0 6px rgba(251,113,133,.15); animation: pulse 1.2s infinite; }
-    .dot.warn { background: var(--warn); box-shadow: 0 0 0 6px rgba(251,191,36,.15); }
-    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
-    .status-banner strong { font-size: 1.05rem; }
-    .status-banner .meta { color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; }
-    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem; }
-    .card {
-      grid-column: span 4; border: 1px solid var(--line); background: var(--panel);
-      backdrop-filter: blur(14px); border-radius: var(--radius); padding: 1.15rem 1.2rem 1.25rem; box-shadow: var(--shadow);
+    .hint { margin: 0 0 .7rem; color: var(--muted); font-size: .84rem; line-height: 1.45; }
+    textarea {
+      width: 100%; min-height: 220px; resize: vertical;
+      border: 1px solid var(--line); border-radius: 12px; padding: .85rem;
+      font-family: "IBM Plex Mono", monospace; font-size: .78rem; line-height: 1.45;
+      background: #fff; color: var(--text); outline: none;
     }
-    .card.wide { grid-column: span 8; }
-    .card.full { grid-column: span 12; }
-    .card h2 {
-      margin: 0 0 0.85rem; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--muted); font-weight: 600;
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13,143,111,.12); }
+    .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .75rem; }
+    .row .spacer { flex: 1; }
+    .divider {
+      height: 1px; background: var(--line); margin: 1.25rem 0;
     }
-    .stat { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 700; letter-spacing: -0.03em; margin: 0; }
-    .stat.mono { font-family: "IBM Plex Mono", monospace; font-size: 1.15rem; font-weight: 500; }
-    .sub { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.85rem; }
-    .kv { display: grid; gap: 0.55rem; }
-    .kv-row {
-      display: flex; justify-content: space-between; gap: 1rem; padding: 0.45rem 0;
-      border-bottom: 1px solid rgba(120,180,200,0.08); font-size: 0.9rem;
+    .console-toolbar { display: flex; gap: .4rem; margin-bottom: .6rem; align-items: center; }
+    .console-toolbar .grow { flex: 1; }
+    .filter-input {
+      width: 100%; border: 1px solid var(--line); background: #fff; color: var(--text);
+      border-radius: 9px; padding: .45rem .75rem; font: inherit; font-size: .84rem; outline: none;
     }
-    .kv-row span:first-child { color: var(--muted); }
-    .kv-row span:last-child { font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; text-align: right; word-break: break-all; }
-    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
-    .tag {
-      font-size: 0.72rem; padding: 0.28rem 0.55rem; border-radius: 999px; border: 1px solid var(--line);
-      color: var(--muted); background: rgba(255,255,255,0.02);
-    }
-    .tag.on { color: var(--good); border-color: rgba(52,211,153,.35); }
-    .tag.off { color: var(--bad); border-color: rgba(251,113,133,.3); }
-    .chart-box { height: 160px; margin-top: 0.5rem; }
-    .console-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; align-items: center; }
-    .console-toolbar .grow { flex: 1; min-width: 140px; }
     .console-box {
-      max-height: min(62vh, 560px); overflow: auto; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem;
-      display: grid; gap: 0.35rem; padding: 0.35rem; border-radius: 16px; background: rgba(0,0,0,.28);
-      border: 1px solid rgba(120,180,200,.1);
+      max-height: min(55vh, 480px); overflow: auto;
+      font-family: "IBM Plex Mono", monospace; font-size: .76rem;
+      display: grid; gap: .25rem;
     }
     .log-line {
-      display: grid; grid-template-columns: 78px 58px 1fr; gap: 0.55rem; padding: 0.45rem 0.55rem;
-      border-radius: 10px; background: rgba(255,255,255,0.02);
+      display: grid; grid-template-columns: 70px 48px 1fr; gap: .45rem;
+      padding: .35rem 0; border-bottom: 1px solid #edf2ee;
     }
-    .log-line:hover { background: rgba(45,212,191,0.06); }
-    .log-line .lvl-info { color: var(--accent-2); }
+    .log-line .time { color: var(--muted); }
+    .log-line .lvl-info { color: #1a7a9c; }
     .log-line .lvl-cmd { color: var(--accent); }
     .log-line .lvl-warn { color: var(--warn); }
     .log-line .lvl-error { color: var(--bad); }
-    .log-line .time { color: var(--muted); }
-    .filter-input {
-      width: 100%; border: 1px solid var(--line); background: rgba(0,0,0,.25); color: var(--text);
-      border-radius: 999px; padding: 0.5rem 0.9rem; font: inherit; font-size: 0.85rem; outline: none;
-    }
     footer {
-      margin-top: 1.5rem; color: var(--muted); font-size: 0.8rem;
-      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      margin-top: 1.5rem; padding-top: .85rem; border-top: 1px solid var(--line);
+      color: var(--muted); font-size: .76rem;
+      display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap;
     }
-    .err {
-      display: none; margin-top: 1rem; padding: 0.9rem 1rem; border-radius: 14px;
-      border: 1px solid rgba(251,113,133,.35); background: rgba(251,113,133,.08); color: #fecdd3;
-    }
-    .err.show { display: block; }
-    @media (max-width: 900px) {
-      .card, .card.wide { grid-column: span 12; }
+    @media (max-width: 640px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
       .log-line { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="noise"></div>
   <div class="wrap">
-    <header class="hero">
-      <div class="brand-row">
-        <div class="brand">
-          <h1><span class="mark">Download</span> Bot</h1>
-          <p>Giám sát bot và xem log realtime.</p>
-        </div>
-        <div class="actions">
-          <button type="button" id="btnCheckSession">Kiểm tra session</button>
-          <button type="button" id="btnSyncAppstate">Sync appstate</button>
-          <button type="button" id="btnRestart" class="danger">Restart</button>
-          <button type="button" id="btnRefresh">Refresh</button>
-          <button type="button" id="btnLogout">Logout</button>
-        </div>
+    <div class="topbar">
+      <div class="brand">
+        <h1><span class="mark">Download</span> Bot</h1>
       </div>
-
-      <div class="tabs" role="tablist">
-        <button type="button" class="tab active" data-tab="overview">Overview</button>
-        <button type="button" class="tab" data-tab="console">Console</button>
+      <div class="top-actions">
+        <button type="button" id="btnRefresh" class="ghost">Refresh</button>
+        <button type="button" id="btnLogout" class="ghost">Logout</button>
       </div>
+    </div>
 
-      <div class="status-banner" id="banner">
-        <div class="dot warn" id="dot"></div>
-        <div>
-          <strong id="bannerTitle">Đang tải…</strong>
-          <div class="meta" id="bannerMeta">—</div>
-        </div>
+    <div class="status" id="banner">
+      <div class="dot warn" id="dot"></div>
+      <div>
+        <strong id="bannerTitle">Đang tải…</strong>
+        <div class="meta" id="bannerMeta">—</div>
       </div>
-      <div class="err" id="errBox"></div>
-    </header>
+    </div>
+    <div class="notice" id="notice"></div>
 
-    <section class="panel active" id="panel-overview">
-      <div class="grid">
-        <article class="card">
-          <h2>Session (cookie)</h2>
-          <p class="stat" id="sessionState">—</p>
-          <p class="sub" id="sessionUser">—</p>
-          <div class="tags" id="sessionTags"></div>
-        </article>
-        <article class="card">
-          <h2>MQTT listen</h2>
-          <p class="stat" id="mqttState">—</p>
-          <p class="sub" id="mqttSub">Kênh nhận tin Messenger</p>
-          <div class="tags" id="mqttTags"></div>
-        </article>
-        <article class="card">
-          <h2>Uptime</h2>
-          <p class="stat mono" id="uptime">—</p>
-          <p class="sub" id="uptimeSub">Process uptime</p>
-        </article>
-        <article class="card">
-          <h2>Memory</h2>
-          <p class="stat mono" id="mem">—</p>
-          <p class="sub" id="memSub">—</p>
-          <div class="chart-box"><canvas id="memChart"></canvas></div>
-        </article>
-        <article class="card wide">
-          <h2>Runtime</h2>
-          <div class="kv" id="runtimeKv"></div>
-        </article>
-        <article class="card">
-          <h2>Anti-die</h2>
-          <div class="kv" id="antiKv"></div>
-          <div class="tags" id="antiTags"></div>
-        </article>
+    <div class="metrics">
+      <div class="metric">
+        <div class="label">Session</div>
+        <div class="value" id="sessionState">—</div>
+        <div class="hint" id="sessionUser">—</div>
+      </div>
+      <div class="metric">
+        <div class="label">MQTT</div>
+        <div class="value" id="mqttState">—</div>
+        <div class="hint" id="mqttSub">—</div>
+      </div>
+      <div class="metric">
+        <div class="label">Uptime</div>
+        <div class="value" id="uptime" style="font-family:IBM Plex Mono,monospace;font-size:.95rem;font-weight:500">—</div>
+        <div class="hint" id="uptimeSub">—</div>
+      </div>
+      <div class="metric">
+        <div class="label">Memory</div>
+        <div class="value" id="mem" style="font-family:IBM Plex Mono,monospace;font-size:.95rem;font-weight:500">—</div>
+        <div class="hint" id="memSub">—</div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button type="button" class="tab active" data-tab="appstate">Appstate</button>
+      <button type="button" class="tab" data-tab="console">Console</button>
+    </nav>
+
+    <section class="panel active" id="panel-appstate">
+      <p class="section-title">Paste appstate</p>
+      <p class="hint">Dán mảng cookie JSON → Lưu & restart. Bot cũng đẩy lên JSONBin (nếu đã cấu hình) để poll không ghi đè bản cũ.</p>
+      <textarea id="appstatePaste" placeholder='[{"key":"c_user","value":"...","domain":".facebook.com",...}]' spellcheck="false"></textarea>
+      <div class="row">
+        <button type="button" id="btnPasteSave" class="primary">Lưu & restart</button>
+        <button type="button" id="btnClearPaste" class="ghost">Xóa</button>
+        <span class="spacer"></span>
+        <button type="button" id="btnFromJsonbin">Từ JSONBin</button>
+        <button type="button" id="btnCheckSession">Check session</button>
+        <button type="button" id="btnRestart" class="danger">Restart</button>
       </div>
     </section>
 
     <section class="panel" id="panel-console">
-      <article class="card full">
-        <h2>Live console</h2>
-        <div class="console-toolbar">
-          <div class="grow">
-            <input class="filter-input" id="logFilter" placeholder="Lọc: ping, download, error…" />
-          </div>
-          <button type="button" id="btnClearView">Clear view</button>
-          <button type="button" id="btnCopyLogs">Copy logs</button>
+      <div class="console-toolbar">
+        <div class="grow">
+          <input class="filter-input" id="logFilter" placeholder="Lọc log…" />
         </div>
-        <div class="console-box" id="logs">Chưa có log.</div>
-      </article>
+        <button type="button" id="btnClearView" class="ghost">Clear</button>
+        <button type="button" id="btnCopyLogs" class="ghost">Copy</button>
+      </div>
+      <div class="console-box" id="logs">Chưa có log.</div>
     </section>
 
     <footer>
@@ -232,30 +205,31 @@
   </div>
 
   <script>
-    let memChart;
-    let lastPayload = null;
-    let hideBefore = 0;
-
+    let lastPayload = null, hideBefore = 0;
     const opts = { credentials: 'include', cache: 'no-store' };
 
     function fmtUptime(sec) {
       sec = Math.max(0, Math.floor(sec || 0));
-      const d = Math.floor(sec / 86400);
-      const h = Math.floor((sec % 86400) / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = sec % 60;
-      const parts = [];
-      if (d) parts.push(d + 'd');
-      if (h || d) parts.push(h + 'h');
-      parts.push(m + 'm', s + 's');
-      return parts.join(' ');
+      const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600);
+      const m = Math.floor((sec % 3600) / 60), s = sec % 60;
+      const p = [];
+      if (d) p.push(d + 'd');
+      if (h || d) p.push(h + 'h');
+      p.push(m + 'm', s + 's');
+      return p.join(' ');
     }
     function fmtTime(ts) { return ts ? new Date(ts).toLocaleString('vi-VN') : '—'; }
     function escapeHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
-    function setKv(el, rows) {
-      el.innerHTML = rows.map(([k,v]) => `<div class="kv-row"><span>${k}</span><span>${v ?? '—'}</span></div>`).join('');
+    function showNotice(text, type = 'ok', persist = false) {
+      const el = document.getElementById('notice');
+      el.textContent = text;
+      el.className = 'notice show ' + type;
+      if (!persist) setTimeout(() => el.classList.remove('show'), type === 'warn' ? 8000 : 4000);
+    }
+    function clearNotice() {
+      document.getElementById('notice').classList.remove('show');
     }
 
     document.querySelectorAll('.tab').forEach((btn) => {
@@ -273,10 +247,7 @@
         .filter((l) => (l.at || 0) >= hideBefore)
         .filter((l) => !q || `${l.level} ${l.message}`.toLowerCase().includes(q));
       const el = document.getElementById('logs');
-      if (!filtered.length) {
-        el.textContent = 'Không có log phù hợp.';
-        return;
-      }
+      if (!filtered.length) { el.textContent = 'Không có log.'; return; }
       el.innerHTML = filtered.map((l) => {
         const t = new Date(l.at).toLocaleTimeString('vi-VN');
         const lvl = (l.level || 'info').toLowerCase();
@@ -287,221 +258,126 @@
     function render(data) {
       lastPayload = data;
       const alive = data.session?.alive;
-      const ready = data.bot?.ready;
       const health = data.health || {};
       const mqtt = data.mqtt || {};
-      const dot = document.getElementById('dot');
-      const level = health.level || (alive === true ? 'ok' : alive === false ? 'bad' : 'warn');
-      dot.className = 'dot ' + level;
-      document.getElementById('bannerTitle').textContent =
-        `${data.bot?.name || 'Bot'} · ${health.label || '—'}`;
-      document.getElementById('bannerMeta').textContent =
-        `${health.detail || '—'} · check ${fmtTime(data.session?.lastCheckAt)} · refresh ${fmtTime(data.refreshedAt)}`;
+      document.getElementById('dot').className = 'dot ' + (health.level || 'warn');
+      document.getElementById('bannerTitle').textContent = `${data.bot?.name || 'Bot'} · ${health.label || '—'}`;
+      document.getElementById('bannerMeta').textContent = `${health.detail || '—'} · ${fmtTime(data.refreshedAt)}`;
 
       document.getElementById('sessionState').textContent =
-        alive === true ? 'Alive' : alive === false ? 'Dead' : 'Unknown';
-      document.getElementById('sessionUser').textContent = data.session?.userName
-        ? `User: ${data.session.userName}` : 'Chưa có tên user';
+        alive === true ? 'Alive' : alive === false ? 'Dead' : '—';
+      document.getElementById('sessionUser').textContent = data.session?.userName || '—';
 
       document.getElementById('mqttState').textContent =
-        mqtt.connected === true ? 'Connected' : mqtt.connected === false ? 'Down' : 'Unknown';
+        mqtt.connected === true ? 'OK' : mqtt.connected === false ? 'Down' : '—';
       document.getElementById('mqttSub').textContent = mqtt.connected === false
-        ? (mqtt.lastError || 'Server unavailable')
-        : mqtt.lastEventAt
-          ? `Last event ${fmtTime(mqtt.lastEventAt)}`
-          : 'Kênh nhận tin Messenger';
-
-      const mqttTags = document.getElementById('mqttTags');
-      mqttTags.innerHTML = '';
-      const addMqttTag = (text, cls) => {
-        const s = document.createElement('span');
-        s.className = 'tag ' + (cls || '');
-        s.textContent = text;
-        mqttTags.appendChild(s);
-      };
-      addMqttTag(mqtt.connected === true ? 'listen OK' : mqtt.connected === false ? 'listen fail' : 'pending',
-        mqtt.connected === true ? 'on' : mqtt.connected === false ? 'off' : '');
-      if (mqtt.reconnects) addMqttTag('reconnects: ' + mqtt.reconnects);
-      const tags = document.getElementById('sessionTags');
-      tags.innerHTML = '';
-      const addTag = (text, cls) => {
-        const s = document.createElement('span');
-        s.className = 'tag ' + (cls || '');
-        s.textContent = text;
-        tags.appendChild(s);
-      };
-      addTag(ready ? 'botReady' : 'not ready', ready ? 'on' : 'off');
-      if (data.session?.lastError) addTag('err: ' + String(data.session.lastError).slice(0, 40), 'off');
-      addTag('fails: ' + (data.session?.consecutiveFails ?? 0));
+        ? (mqtt.lastError || 'Không nhận tin').slice(0, 40)
+        : mqtt.lastEventAt ? fmtTime(mqtt.lastEventAt) : 'Chờ event';
 
       document.getElementById('uptime').textContent = fmtUptime(data.runtime?.uptimeSec);
-      document.getElementById('uptimeSub').textContent =
-        `Process ${fmtUptime(data.runtime?.processUptimeSec)} · PID ${data.runtime?.pid ?? '—'}`;
+      document.getElementById('uptimeSub').textContent = `PID ${data.runtime?.pid ?? '—'}`;
 
       const mem = data.runtime?.memory || {};
       document.getElementById('mem').textContent = `${mem.usedPercent ?? '—'}%`;
-      document.getElementById('memSub').textContent = `${mem.usedLabel || '—'} / ${mem.totalLabel || '—'}`;
-
-      if (window.Chart) {
-        const used = mem.usedPercent ?? 0;
-        const free = Math.max(0, 100 - used);
-        const ctx = document.getElementById('memChart');
-        if (memChart) {
-          memChart.data.datasets[0].data = [used, free];
-          memChart.update('none');
-        } else {
-          memChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-              labels: ['Used', 'Free'],
-              datasets: [{ data: [used, free], backgroundColor: ['#2dd4bf', 'rgba(127,158,170,0.25)'], borderWidth: 0 }]
-            },
-            options: { cutout: '72%', plugins: { legend: { display: false } }, animation: { duration: 400 } }
-          });
-        }
-      }
-
-      setKv(document.getElementById('runtimeKv'), [
-        ['Bot', data.bot?.name],
-        ['Prefix', data.bot?.prefix],
-        ['FCA', data.bot?.fca],
-        ['Node', data.runtime?.node],
-        ['Host', data.runtime?.hostname],
-        ['Platform', data.runtime?.platform],
-        ['CPU / Load', `${data.runtime?.cpus ?? '—'} · ${(data.runtime?.loadAvg || []).join(' / ')}`],
-        ['Last OK', fmtTime(data.session?.lastOkAt)],
-        ['Last error', data.session?.lastError || '—']
-      ]);
-
-      const anti = data.antiDie || {};
-      setKv(document.getElementById('antiKv'), [
-        ['Session check', `${anti.sessionCheckInterval ?? 5} min`],
-        ['Send delay', `${anti.sendDelayMs ?? '—'} ms`],
-        ['Download concurrency', anti.downloadConcurrency],
-        ['URL cooldown', `${Math.round((anti.downloadCooldownMs || 0) / 1000)}s`],
-        ['Login delay', `${anti.loginDelayMs ?? '—'} ms`],
-        ['Proxy', anti.proxy || 'direct']
-      ]);
-      const antiTags = document.getElementById('antiTags');
-      antiTags.innerHTML = '';
-      [['proxy', anti.proxyEnabled], ['auto-restart', anti.autoRestart]].forEach(([name, on]) => {
-        const s = document.createElement('span');
-        s.className = 'tag ' + (on ? (name === 'auto-restart' ? '' : 'on') : 'off');
-        s.textContent = on ? name + ' on' : name + ' off';
-        antiTags.appendChild(s);
-      });
+      document.getElementById('memSub').textContent = mem.usedLabel || '—';
 
       renderLogs(data.logs || []);
       document.getElementById('footLeft').textContent = data.service || 'bot-download-video';
-      document.getElementById('footRight').textContent = `Cập nhật ${fmtTime(data.refreshedAt)}`;
+      document.getElementById('footRight').textContent = fmtTime(data.refreshedAt);
     }
 
     async function load() {
-      const errBox = document.getElementById('errBox');
-      errBox.style.borderColor = '';
-      errBox.style.background = '';
-      errBox.style.color = '';
+      clearNotice();
       try {
         const res = await fetch('/api/status', opts);
-        if (res.status === 401) {
-          location.href = '/login?next=' + encodeURIComponent('/');
-          return;
-        }
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
-        errBox.classList.remove('show');
-        render(data);
+        if (res.status === 401) { location.href = '/login?next=/'; return; }
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+        render(await res.json());
       } catch (e) {
-        errBox.textContent = 'Không tải được status: ' + e.message;
-        errBox.classList.add('show');
+        showNotice('Không tải được: ' + e.message, 'err', true);
       }
+    }
+
+    async function postAction(url, body, btn, busy) {
+      const prev = btn?.textContent;
+      if (btn) { btn.disabled = true; btn.textContent = busy; }
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: body ? { 'Content-Type': 'application/json' } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
+          ...opts
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) { location.href = '/login?next=/'; return null; }
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = prev; }
+      }
+    }
+
+    async function waitForBot() {
+      showNotice('Bot đang khởi động lại…', 'warn', true);
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        try {
+          const h = await fetch('/health', { cache: 'no-store' });
+          if (h.ok) { location.reload(); return; }
+        } catch (_) {}
+      }
+      location.reload();
     }
 
     document.getElementById('btnRefresh').addEventListener('click', load);
 
-    async function runAction(url, btn, busyText) {
-      const prev = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = busyText;
-      const errBox = document.getElementById('errBox');
+    document.getElementById('btnPasteSave').addEventListener('click', async (e) => {
+      const raw = document.getElementById('appstatePaste').value;
+      if (!raw.trim()) { showNotice('Chưa dán appstate', 'err'); return; }
       try {
-        const res = await fetch(url, { method: 'POST', ...opts });
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          location.href = '/login?next=' + encodeURIComponent('/');
-          return;
-        }
-        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        errBox.classList.remove('show');
-        errBox.textContent = data.message || 'Xong';
-        errBox.style.borderColor = 'rgba(52,211,153,.35)';
-        errBox.style.background = 'rgba(52,211,153,.08)';
-        errBox.style.color = '#a7f3d0';
-        errBox.classList.add('show');
-        setTimeout(() => errBox.classList.remove('show'), 3000);
-        await load();
-      } catch (e) {
-        errBox.style.borderColor = '';
-        errBox.style.background = '';
-        errBox.style.color = '';
-        errBox.textContent = e.message;
-        errBox.classList.add('show');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = prev;
-      }
-    }
-
-    document.getElementById('btnCheckSession').addEventListener('click', (e) => {
-      runAction('/api/actions/check-session', e.currentTarget, 'Đang kiểm tra…');
-    });
-    document.getElementById('btnSyncAppstate').addEventListener('click', (e) => {
-      runAction('/api/actions/sync-appstate', e.currentTarget, 'Đang sync…');
-    });
-    document.getElementById('btnRestart').addEventListener('click', async (e) => {
-      if (!confirm('Restart bot ngay? Bot sẽ offline vài giây.')) return;
-      const btn = e.currentTarget;
-      const prev = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Đang restart…';
-      const errBox = document.getElementById('errBox');
-      try {
-        const res = await fetch('/api/actions/restart', { method: 'POST', ...opts });
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          location.href = '/login?next=' + encodeURIComponent('/');
-          return;
-        }
-        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        errBox.textContent = data.message || 'Đang khởi động lại…';
-        errBox.style.borderColor = 'rgba(251,191,36,.35)';
-        errBox.style.background = 'rgba(251,191,36,.08)';
-        errBox.style.color = '#fde68a';
-        errBox.classList.add('show');
-        for (let i = 0; i < 40; i++) {
-          await new Promise((r) => setTimeout(r, 3000));
-          try {
-            const h = await fetch('/health', { cache: 'no-store' });
-            if (h.ok) {
-              location.reload();
-              return;
-            }
-          } catch (_) {}
-        }
-        location.reload();
+        const data = await postAction('/api/actions/paste-appstate', { appstate: raw }, e.currentTarget, 'Đang lưu…');
+        if (!data) return;
+        if (data.restarting) return waitForBot();
+        showNotice(data.message || 'Xong', 'ok');
       } catch (ex) {
-        errBox.style.borderColor = '';
-        errBox.style.background = '';
-        errBox.style.color = '';
-        errBox.textContent = ex.message;
-        errBox.classList.add('show');
-        btn.disabled = false;
-        btn.textContent = prev;
+        showNotice(ex.message, 'err', true);
       }
     });
+
+    document.getElementById('btnClearPaste').addEventListener('click', () => {
+      document.getElementById('appstatePaste').value = '';
+    });
+
+    document.getElementById('btnFromJsonbin').addEventListener('click', async (e) => {
+      try {
+        const data = await postAction('/api/actions/apply-appstate', { force: true }, e.currentTarget, 'Đang tải…');
+        if (!data) return;
+        if (data.restarting) return waitForBot();
+        showNotice(data.message || 'Xong', 'ok');
+        await load();
+      } catch (ex) {
+        showNotice(ex.message, 'err', true);
+      }
+    });
+
+    document.getElementById('btnCheckSession').addEventListener('click', async (e) => {
+      try {
+        const data = await postAction('/api/actions/check-session', null, e.currentTarget, '…');
+        if (!data) return;
+        showNotice(data.message || 'Xong', data.session?.alive ? 'ok' : 'err');
+        await load();
+      } catch (ex) { showNotice(ex.message, 'err', true); }
+    });
+
+    document.getElementById('btnRestart').addEventListener('click', async (e) => {
+      if (!confirm('Restart bot ngay?')) return;
+      try {
+        const data = await postAction('/api/actions/restart', null, e.currentTarget, '…');
+        if (!data) return;
+        await waitForBot();
+      } catch (ex) { showNotice(ex.message, 'err', true); }
+    });
+
     document.getElementById('logFilter').addEventListener('input', () => {
       if (lastPayload) renderLogs(lastPayload.logs || []);
     });
@@ -511,11 +387,10 @@
     });
     document.getElementById('btnCopyLogs').addEventListener('click', async () => {
       const logs = (lastPayload?.logs || []).filter((l) => (l.at || 0) >= hideBefore);
-      const text = logs.map((l) => `${new Date(l.at).toISOString()} [${l.level}] ${l.message}`).join('\n');
-      await navigator.clipboard.writeText(text);
-      const b = document.getElementById('btnCopyLogs');
-      b.textContent = 'Copied!';
-      setTimeout(() => (b.textContent = 'Copy logs'), 1000);
+      await navigator.clipboard.writeText(
+        logs.map((l) => `${new Date(l.at).toISOString()} [${l.level}] ${l.message}`).join('\n')
+      );
+      showNotice('Đã copy logs', 'ok');
     });
     document.getElementById('btnLogout').addEventListener('click', async () => {
       await fetch('/api/logout', { method: 'POST', ...opts });

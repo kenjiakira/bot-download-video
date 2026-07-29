@@ -48,17 +48,32 @@ Edit `admin.json`:
 | `AUTO_RESTART_ENABLED` | Restart định kỳ 3h30 (`true`/`false`, mặc định tắt) |
 | `PROXY_URL` | Proxy cố định (ưu tiên cao nhất) |
 | `PROXY_ENABLED` | `true` mới đọc `prox.txt` (mặc định `false`) |
-| `DASHBOARD_TOKEN` | Token bảo vệ dashboard (`/?token=...`) |
+| `DASHBOARD_TOKEN` | Mật khẩu dashboard |
+| `WEBHOOK_SECRET` | Secret cho `POST /api/webhook/appstate` (script local) |
 
 ## Dashboard web
 
-1. Mở `https://<app>.onrender.com/login`
-2. Nhập `DASHBOARD_TOKEN` (mật khẩu) → cookie 7 ngày
-3. Dashboard có tab **Overview** + **Console** (lệnh / autodownload realtime)
+1. Mở `https://<app>.onrender.com/login` → nhập `DASHBOARD_TOKEN`
+2. Tab **Tổng quan** — session, MQTT, uptime
+3. Tab **Điều khiển** — **Áp dụng appstate** (sync JSONBin + restart nếu đổi), webhook curl
+4. Tab **Console** — log realtime
 
-- UI: [`public/login.html`](public/login.html), [`public/dashboard.html`](public/dashboard.html)
-- API: `POST /api/login`, `GET /api/status`, `GET /api/logs`
-- UptimeRobot vẫn dùng `/ping` (không cần login)
+API chính:
+- `POST /api/actions/apply-appstate` — sync + restart khi có cookie mới
+- `POST /api/webhook/appstate` — gọi từ máy local (header `X-Webhook-Secret`)
+- `POST /api/actions/restart`, `check-session`, `sync-appstate`
+
+### Push cookie từ máy local (1 lệnh)
+
+```bash
+export JSONBIN_BIN_ID=...
+export JSONBIN_MASTER_KEY=...
+export BOT_WEBHOOK_URL=https://<app>.onrender.com/api/webhook/appstate
+export WEBHOOK_SECRET=...
+./scripts/push-appstate.sh appstate.json
+```
+
+Script upload JSONBin → gọi webhook → bot áp dụng ngay.
 
 | `FB_USER_AGENT` | User-Agent cố định |
 | `LOGIN_DELAY_MS` | Delay trước login (mặc định 3000) |
@@ -114,9 +129,10 @@ APPSTATE_SYNC_ENABLED=true
 
 Bot sẽ:
 - Tải appstate từ JSONBin **trước khi login**
-- Kiểm tra định kỳ; nếu bạn cập nhật bin → bot tự restart và dùng session mới
+- Poll định kỳ (`APPSTATE_SYNC_INTERVAL`, mặc định 15 phút)
+- **Áp dụng ngay**: dashboard → Điều khiển → **Áp dụng appstate**, hoặc webhook / `scripts/push-appstate.sh`
 
-Cập nhật cookie: chỉ cần sửa bin trên JSONBin, không cần redeploy Render.
+Cập nhật cookie: sửa bin trên JSONBin → áp dụng qua dashboard/webhook — không cần redeploy Render.
 
 ## Run
 
@@ -148,12 +164,20 @@ Có thể dùng `render.yaml` trong repo (Blueprint) để tạo service nhanh h
 ## Layout
 
 ```
-main.js                 # Express + login + listen
-utils/webServer.js      # / /health /ping /session
+main.js                 # login + listen
+server/                 # HTTP dashboard backend
+  index.js              # createApp / startWebServer
+  state.js              # botReady, session, mqtt, logs
+  auth.js               # cookie auth + webhook secret
+  status.js             # /api/status payload
+  actions.js            # apply appstate, restart
+  routes/               # pages + /api/*
+utils/webServer.js      # re-export → server/ (compat)
 utils/sessionGuard.js   # check session mỗi 5 phút
 utils/fingerprint.js    # proxy/UA ổn định
 utils/sendQueue.js      # rate-limit sendMessage
 utils/downloadGuard.js  # cooldown + concurrency download
 events/atd.js           # auto-download
+public/                 # dashboard + login (light theme)
 render.yaml
 ```

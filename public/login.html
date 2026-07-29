@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg0: #071018;
-      --panel: rgba(14, 28, 40, 0.85);
-      --line: rgba(120, 180, 200, 0.16);
-      --text: #e7f3f6;
-      --muted: #7f9eaa;
-      --accent: #2dd4bf;
-      --bad: #fb7185;
+      --bg: #f3f6f4;
+      --panel: #ffffff;
+      --line: #d5e0d8;
+      --text: #15231c;
+      --muted: #5f7368;
+      --accent: #0d8f6f;
+      --bad: #c2410c;
     }
     * { box-sizing: border-box; }
     body {
@@ -27,66 +27,59 @@
       place-items: center;
       padding: 1.5rem;
       background:
-        radial-gradient(900px 500px at 20% 0%, rgba(45, 212, 191, 0.18), transparent 55%),
-        radial-gradient(700px 400px at 100% 100%, rgba(56, 189, 248, 0.12), transparent 50%),
-        linear-gradient(165deg, #071018, #0c1822 50%, #08141c);
+        radial-gradient(800px 400px at 15% 0%, rgba(13,143,111,.1), transparent 55%),
+        radial-gradient(600px 360px at 100% 100%, rgba(26,122,156,.07), transparent 50%),
+        linear-gradient(180deg, #f7faf8, var(--bg));
     }
     .card {
-      width: min(420px, 100%);
+      width: min(400px, 100%);
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 24px;
+      border-radius: 20px;
       padding: 2rem 1.75rem 1.75rem;
-      box-shadow: 0 30px 70px rgba(0,0,0,.45);
-      backdrop-filter: blur(16px);
-      animation: rise .55s ease both;
+      box-shadow: 0 16px 40px rgba(21, 35, 28, 0.08);
+      animation: rise .45s ease both;
     }
     @keyframes rise {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: none; }
     }
-    h1 {
-      margin: 0;
-      font-size: 1.65rem;
-      letter-spacing: -0.03em;
-    }
+    h1 { margin: 0 0 1.25rem; font-size: 1.55rem; letter-spacing: -0.03em; }
     h1 span { color: var(--accent); }
-    p {
-      margin: 0.55rem 0 1.4rem;
-      color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.92rem;
-    }
     label {
       display: block;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 0.45rem;
+      margin-bottom: 0.4rem;
     }
     input {
       width: 100%;
       border: 1px solid var(--line);
-      background: rgba(0,0,0,.25);
+      background: #f8faf9;
       color: var(--text);
-      border-radius: 14px;
-      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
       font: inherit;
       outline: none;
       margin-bottom: 1rem;
     }
-    input:focus { border-color: rgba(45,212,191,.55); }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(13,143,111,.12);
+      background: #fff;
+    }
     button {
       width: 100%;
       border: 0;
-      border-radius: 14px;
-      padding: 0.95rem 1rem;
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
       font: inherit;
       font-weight: 600;
       cursor: pointer;
-      color: #042f2e;
-      background: linear-gradient(135deg, #2dd4bf, #38bdf8);
+      color: #fff;
+      background: var(--accent);
     }
     button:hover { filter: brightness(1.05); }
     button:disabled { opacity: .6; cursor: wait; }
@@ -94,10 +87,10 @@
       display: none;
       margin-bottom: 0.9rem;
       padding: 0.7rem 0.85rem;
-      border-radius: 12px;
-      background: rgba(251,113,133,.1);
-      border: 1px solid rgba(251,113,133,.35);
-      color: #fecdd3;
+      border-radius: 10px;
+      background: #fff5f0;
+      border: 1px solid #f0c4b0;
+      color: #9a3412;
       font-size: 0.88rem;
     }
     .err.show { display: block; }
