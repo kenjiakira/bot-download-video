@@ -7,6 +7,7 @@ const getFBInfo = require('@xaviabot/fb-downloader');
 const { ZM_API, TIKTOK_API } = require('../utils/api');
 const Downloader = require('../utils/downloader');
 const { createQueuedApi } = require('../utils/sendQueue');
+const { sendProcessingMessage } = require('../utils/processingMessage');
 const { canDownload, markDownload, withDownloadSlot } = require('../utils/downloadGuard');
 const { getUserAgent } = require('../utils/fingerprint');
 
@@ -294,27 +295,6 @@ async function handleYouTube(url, api, event) {
     }
 }
 
-async function sendProcessingMessage(api, threadID, message = "⏳ Đang xử lý...") {
-    try {
-        const sentMessage = await api.sendMessage(message, threadID);
-        return {
-            messageID: sentMessage.messageID,
-            remove: async () => {
-                try {
-                    await api.unsendMessage(sentMessage.messageID);
-                } catch (err) {
-                    console.error("Error removing processing message:", err);
-                }
-            }
-        };
-    } catch (err) {
-        console.error("Error sending processing message:", err);
-        return {
-            messageID: null,
-            remove: async () => { }
-        }
-    }
-}
 async function handleDouyin(url, api, event) {
     let processingMsg = null;
     try {
