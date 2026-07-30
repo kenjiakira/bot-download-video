@@ -33,6 +33,7 @@
     "fs-extra": "^11.2.0",
     "gradient-string": "^2.0.2",
     "mqtt": "^4.3.7",
+    "nexus-fca": "^3.4.0",
     "npmlog": "^7.0.1",
     "request": "^2.88.2",
     "websocket-stream": "^5.5.2",

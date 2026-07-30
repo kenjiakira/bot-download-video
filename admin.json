@@ -19,6 +19,6 @@
   "appstate": "./appstate.json",
   "restart": true,
   "restartTime": 50,
-  "FCA": "hut-chat-api",
+  "FCA": "nexus-fca",
   "mtnMode": false
 }
